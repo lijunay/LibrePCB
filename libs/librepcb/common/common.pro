@@ -60,6 +60,7 @@ SOURCES += \
     exceptions.cpp \
     fileio/directorylock.cpp \
     fileio/filepath.cpp \
+    fileio/filesystem.cpp \
     fileio/fileutils.cpp \
     fileio/sexpression.cpp \
     fileio/smartfile.cpp \
@@ -171,6 +172,7 @@ HEADERS += \
     fileio/cmd/cmdlistelementsswap.h \
     fileio/directorylock.h \
     fileio/filepath.h \
+    fileio/filesystem.h \
     fileio/fileutils.h \
     fileio/serializablekeyvaluemap.h \
     fileio/serializableobject.h \
