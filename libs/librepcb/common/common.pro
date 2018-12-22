@@ -59,6 +59,7 @@ SOURCES += \
     dialogs/textpropertiesdialog.cpp \
     exceptions.cpp \
     fileio/directorylock.cpp \
+    fileio/diskfilesystem.cpp \
     fileio/filepath.cpp \
     fileio/filesystem.cpp \
     fileio/fileutils.cpp \
@@ -171,6 +172,7 @@ HEADERS += \
     fileio/cmd/cmdlistelementremove.h \
     fileio/cmd/cmdlistelementsswap.h \
     fileio/directorylock.h \
+    fileio/diskfilesystem.h \
     fileio/filepath.h \
     fileio/filesystem.h \
     fileio/fileutils.h \
