@@ -65,10 +65,6 @@ SOURCES += \
     fileio/filesystemref.cpp \
     fileio/fileutils.cpp \
     fileio/sexpression.cpp \
-    fileio/smartfile.cpp \
-    fileio/smartsexprfile.cpp \
-    fileio/smarttextfile.cpp \
-    fileio/smartversionfile.cpp \
     fileio/transactionalfilesystem.cpp \
     fileio/versionfile.cpp \
     font/strokefont.cpp \
@@ -183,10 +179,6 @@ HEADERS += \
     fileio/serializableobject.h \
     fileio/serializableobjectlist.h \
     fileio/sexpression.h \
-    fileio/smartfile.h \
-    fileio/smartsexprfile.h \
-    fileio/smarttextfile.h \
-    fileio/smartversionfile.h \
     fileio/transactionalfilesystem.h \
     fileio/versionfile.h \
     font/strokefont.h \
