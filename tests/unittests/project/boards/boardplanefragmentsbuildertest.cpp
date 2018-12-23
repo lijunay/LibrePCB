@@ -88,9 +88,9 @@ TEST(BoardPlaneFragmentsBuilderTest, testFragments) {
                        actualSexpr.toByteArray());
 
   // load expected plane fragments from file
-  FilePath    expectedFp = testDataDir.getPathTo("expected.lp");
-  SExpression expectedSexpr =
-      SExpression::parse(FileUtils::readFile(expectedFp), expectedFp);
+  FilePath    expectedFp    = testDataDir.getPathTo("expected.lp");
+  SExpression expectedSexpr = SExpression::parse(
+      FileUtils::readFile(expectedFp), expectedFp.toNative());
   QMap<Uuid, QSet<Path>> expectedPlaneFragments;
   foreach (const SExpression& child, expectedSexpr.getChildren("plane")) {
     Uuid uuid = child.getValueOfFirstChild<Uuid>();

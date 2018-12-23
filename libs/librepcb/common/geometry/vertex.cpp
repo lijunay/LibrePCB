@@ -43,8 +43,8 @@ Vertex::Vertex(const SExpression& node) {
     }
     mAngle = node.getValueByPath<Angle>("angle");
   } catch (const Exception& e) {
-    throw FileParseError(__FILE__, __LINE__, node.getFilePath().toNative(), -1,
-                         -1, QString(), e.getMsg());
+    throw FileParseError(__FILE__, __LINE__, node.getFilePath(), -1, -1,
+                         QString(), e.getMsg());
   }
 }
 

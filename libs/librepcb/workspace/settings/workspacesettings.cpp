@@ -49,7 +49,8 @@ WorkspaceSettings::WorkspaceSettings(const Workspace& workspace)
   // load settings if the settings file exists
   SExpression root;
   if (mFilePath.isExistingFile()) {
-    root = SExpression::parse(FileUtils::readFile(mFilePath), mFilePath);
+    root = SExpression::parse(FileUtils::readFile(mFilePath),
+                              mFilePath.toNative());
   } else {
     qInfo("Workspace settings file not found, default settings will be used.");
   }

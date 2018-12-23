@@ -40,8 +40,8 @@ Point::Point(const SExpression& node) {
     mX = node.getChildByIndex(0).getValue<Length>();
     mY = node.getChildByIndex(1).getValue<Length>();
   } catch (const Exception& e) {
-    throw FileParseError(__FILE__, __LINE__, node.getFilePath().toNative(), -1,
-                         -1, QString(), e.getMsg());
+    throw FileParseError(__FILE__, __LINE__, node.getFilePath(), -1, -1,
+                         QString(), e.getMsg());
   }
 }
 

@@ -47,7 +47,8 @@ FavoriteProjectsModel::FavoriteProjectsModel(
     mFilePath = mWorkspace.getMetadataPath().getPathTo("favorite_projects.lp");
     if (mFilePath.isExistingFile()) {
       SExpression root =
-          SExpression::parse(FileUtils::readFile(mFilePath), mFilePath);
+          SExpression::parse(FileUtils::readFile(mFilePath),
+                             mFilePath.toNative());
       const QList<SExpression>& childs = root.getChildren("project");
       foreach (const SExpression& child, childs) {
         QString  path    = child.getValueOfFirstChild<QString>(true);

@@ -50,7 +50,7 @@ SmartSExprFile::~SmartSExprFile() noexcept {
 
 SExpression SmartSExprFile::parseFileAndBuildDomTree() const {
   return SExpression::parse(FileUtils::readFile(mOpenedFilePath),
-                            mOpenedFilePath);
+                            mOpenedFilePath.toNative());
 }
 
 void SmartSExprFile::save(const SExpression& domDocument, bool toOriginal) {

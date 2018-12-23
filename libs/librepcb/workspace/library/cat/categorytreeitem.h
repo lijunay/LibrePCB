@@ -23,7 +23,7 @@
 /*******************************************************************************
  *  Includes
  ******************************************************************************/
-#include <librepcb/common/exceptions.h>
+#include <librepcb/common/fileio/filepath.h>
 #include <librepcb/common/uuid.h>
 
 #include <QtCore>
