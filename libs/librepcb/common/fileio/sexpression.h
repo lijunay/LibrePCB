@@ -95,8 +95,8 @@ public:
     try {
       return deserializeFromSExpression<T>(*this, throwIfEmpty);
     } catch (const Exception& e) {
-      throw FileParseError(__FILE__, __LINE__, mFilePath, -1, -1, mValue,
-                           e.getMsg());
+      throw FileParseError(__FILE__, __LINE__, mFilePath.toNative(), -1, -1,
+                           mValue, e.getMsg());
     }
   }
 
@@ -109,8 +109,8 @@ public:
   template <typename T>
   T getValueOfFirstChild(bool throwIfEmpty = false) const {
     if (mChildren.count() < 1) {
-      throw FileParseError(__FILE__, __LINE__, mFilePath, -1, -1, QString(),
-                           tr("Node does not have children."));
+      throw FileParseError(__FILE__, __LINE__, mFilePath.toNative(), -1, -1,
+                           QString(), tr("Node does not have children."));
     }
     return mChildren.at(0).getValue<T>(throwIfEmpty);
   }

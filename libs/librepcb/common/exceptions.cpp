@@ -23,7 +23,6 @@
 #include "exceptions.h"
 
 #include "debug.h"
-#include "fileio/filepath.h"
 
 #include <QtCore>
 
@@ -93,7 +92,7 @@ RangeError::RangeError(const RangeError& other) noexcept : RuntimeError(other) {
  ******************************************************************************/
 
 FileParseError::FileParseError(const char* file, int line,
-                               const FilePath& filePath, int fileLine,
+                               const QString& filePath, int fileLine,
                                int            fileColumn,
                                const QString& invalidFileContent,
                                const QString& msg) noexcept
@@ -101,7 +100,7 @@ FileParseError::FileParseError(const char* file, int line,
                  QString("File parse error: %1\n\nFile: %2\nLine,Column: "
                          "%3,%4\nInvalid Content: \"%5\"")
                      .arg(msg)
-                     .arg(filePath.toNative())
+                     .arg(filePath)
                      .arg(fileLine)
                      .arg(fileColumn)
                      .arg(invalidFileContent)) {

@@ -30,8 +30,6 @@
  ******************************************************************************/
 namespace librepcb {
 
-class FilePath;
-
 /*******************************************************************************
  *  Class Exception
  ******************************************************************************/
@@ -324,12 +322,12 @@ public:
    * @param line                  See Exception#Exception()
    * @param filePath              The path to the parsed file (optional)
    * @param fileLine              The line number of the parse error (-1 if
-   * unknown)
+   *                              unknown)
    * @param fileColumn            The column of the parse error (-1 if unknown)
    * @param invalidFileContent    The parsed string which is invalid (optional)
    * @param msg                   See Exception#Exception()
    */
-  FileParseError(const char* file, int line, const FilePath& filePath,
+  FileParseError(const char* file, int line, const QString& filePath,
                  int fileLine = -1, int fileColumn = -1,
                  const QString& invalidFileContent = QString(),
                  const QString& msg = QString("File Parse Error")) noexcept;
