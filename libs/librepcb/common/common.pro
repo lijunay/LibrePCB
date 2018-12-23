@@ -62,6 +62,7 @@ SOURCES += \
     fileio/diskfilesystem.cpp \
     fileio/filepath.cpp \
     fileio/filesystem.cpp \
+    fileio/filesystemref.cpp \
     fileio/fileutils.cpp \
     fileio/sexpression.cpp \
     fileio/smartfile.cpp \
@@ -176,6 +177,7 @@ HEADERS += \
     fileio/diskfilesystem.h \
     fileio/filepath.h \
     fileio/filesystem.h \
+    fileio/filesystemref.h \
     fileio/fileutils.h \
     fileio/serializablekeyvaluemap.h \
     fileio/serializableobject.h \
