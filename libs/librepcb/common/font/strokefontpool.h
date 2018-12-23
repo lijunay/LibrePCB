@@ -34,6 +34,8 @@
  ******************************************************************************/
 namespace librepcb {
 
+class FileSystemRef;
+
 /*******************************************************************************
  *  Class StrokeFontPool
  ******************************************************************************/
@@ -46,7 +48,7 @@ class StrokeFontPool final {
 
 public:
   // Constructors / Destructor
-  StrokeFontPool(const FilePath& directory) noexcept;
+  explicit StrokeFontPool(const FileSystemRef& filesystem) noexcept;
   StrokeFontPool(const StrokeFontPool& other) = delete;
   ~StrokeFontPool() noexcept;
 

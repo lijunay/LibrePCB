@@ -34,6 +34,8 @@
 #include <librepcb/common/application.h>
 #include <librepcb/common/exceptions.h>
 #include <librepcb/common/fileio/directorylock.h>
+#include <librepcb/common/fileio/diskfilesystem.h>
+#include <librepcb/common/fileio/filesystemref.h>
 #include <librepcb/common/fileio/fileutils.h>
 #include <librepcb/common/fileio/sexpression.h>
 #include <librepcb/common/fileio/smartsexprfile.h>
@@ -319,7 +321,8 @@ Project::Project(const FilePath& filepath, bool create, bool readOnly,
         FileUtils::copyFile(fp, fontobeneDir.getPathTo(fp.getFilename()));
       }
     }
-    mStrokeFontPool.reset(new StrokeFontPool(fontobeneDir));
+    mFontsFileSystem.reset(new DiskFileSystem(fontobeneDir, true));
+    mStrokeFontPool.reset(new StrokeFontPool(FileSystemRef(*mFontsFileSystem)));
 
     // Create all needed objects
     mProjectMetadata.reset(

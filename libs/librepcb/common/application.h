@@ -35,6 +35,7 @@
  ******************************************************************************/
 namespace librepcb {
 
+class DiskFileSystem;
 class StrokeFont;
 class StrokeFontPool;
 
@@ -105,17 +106,17 @@ public slots:
   static void about() noexcept;
 
 private:  // Data
-  Version   mAppVersion;
-  QString   mAppVersionLabel;
-  QString   mGitRevision;
-  QDateTime mBuildDate;
-  Version   mFileFormatVersion;
-  bool      mIsFileFormatStable;
-  FilePath  mResourcesDir;
-  QScopedPointer<StrokeFontPool>
-        mStrokeFontPool;  ///< all application stroke fonts
-  QFont mSansSerifFont;
-  QFont mMonospaceFont;
+  Version                        mAppVersion;
+  QString                        mAppVersionLabel;
+  QString                        mGitRevision;
+  QDateTime                      mBuildDate;
+  Version                        mFileFormatVersion;
+  bool                           mIsFileFormatStable;
+  FilePath                       mResourcesDir;
+  QScopedPointer<DiskFileSystem> mResourcesFileSystem;
+  QScopedPointer<StrokeFontPool> mStrokeFontPool;  ///< application stroke fonts
+  QFont                          mSansSerifFont;
+  QFont                          mMonospaceFont;
 };
 
 /*******************************************************************************

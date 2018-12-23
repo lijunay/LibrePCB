@@ -40,6 +40,7 @@ class QPrinter;
 
 namespace librepcb {
 
+class DiskFileSystem;
 class SmartTextFile;
 class SmartSExprFile;
 class SmartVersionFile;
@@ -509,6 +510,7 @@ private:
   QScopedPointer<SmartSExprFile> mBoardsFile;      ///< core/boards.lp
 
   // General
+  QScopedPointer<DiskFileSystem> mFontsFileSystem;
   QScopedPointer<StrokeFontPool>
       mStrokeFontPool;  ///< all fonts from ./resources/fontobene/
   QScopedPointer<ProjectMetadata>
