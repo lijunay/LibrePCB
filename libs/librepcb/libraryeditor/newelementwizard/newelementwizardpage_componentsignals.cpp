@@ -24,6 +24,7 @@
 
 #include "ui_newelementwizardpage_componentsignals.h"
 
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/library/cmp/component.h>
 #include <librepcb/library/sym/symbol.h>
 #include <librepcb/workspace/library/workspacelibrarydb.h>
@@ -79,8 +80,9 @@ NewElementWizardPage_ComponentSignals::getPinNames(const Uuid&    symbol,
   QHash<Uuid, CircuitIdentifier> names;
   try {
     FilePath fp = mContext.getWorkspace().getLibraryDb().getLatestSymbol(
-        symbol);           // can throw
-    Symbol sym(fp, true);  // can throw
+        symbol);                  // can throw
+    DiskFileSystem fs(fp, true);  // can throw
+    Symbol         sym(fs);       // can throw
     for (const SymbolPin& pin : sym.getPins()) {
       names.insert(pin.getUuid(),
                    CircuitIdentifier(suffix % pin.getName()));  // can throw

@@ -38,8 +38,6 @@
  ******************************************************************************/
 namespace librepcb {
 
-class SmartSExprFile;
-
 namespace library {
 class Component;
 }
@@ -79,7 +77,7 @@ public:
   // Constructors / Destructor
   Circuit()                     = delete;
   Circuit(const Circuit& other) = delete;
-  Circuit(Project& project, bool restore, bool readOnly, bool create);
+  Circuit(Project& project, bool create);
   ~Circuit() noexcept;
 
   // Getters
@@ -125,7 +123,7 @@ public:
                                 const CircuitIdentifier& newName);
 
   // General Methods
-  bool save(bool toOriginal, QStringList& errors) noexcept;
+  bool save(QStringList& errors) noexcept;
 
   // Operator Overloadings
   Circuit& operator=(const Circuit& rhs) = delete;
@@ -147,10 +145,6 @@ private:
 
   // General
   Project& mProject;  ///< A reference to the Project object (from the ctor)
-
-  // File "circuit/circuit.lp"
-  FilePath        mFilepath;
-  SmartSExprFile* mFile;
 
   QMap<Uuid, NetClass*>          mNetClasses;
   QMap<Uuid, NetSignal*>         mNetSignals;

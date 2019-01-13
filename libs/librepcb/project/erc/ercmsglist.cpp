@@ -27,7 +27,7 @@
 #include "if_ercmsgprovider.h"
 
 #include <librepcb/common/fileio/sexpression.h>
-#include <librepcb/common/fileio/smartsexprfile.h>
+#include <librepcb/common/fileio/transactionalfilesystem.h>
 
 #include <QtCore>
 
@@ -41,18 +41,8 @@ namespace project {
  *  Constructors / Destructor
  ******************************************************************************/
 
-ErcMsgList::ErcMsgList(Project& project, bool restore, bool readOnly,
-                       bool create)
-  : QObject(&project),
-    mProject(project),
-    mFilepath(project.getPath().getPathTo("circuit/erc.lp")),
-    mFile(nullptr) {
-  // try to create/open the file "erc.lp"
-  if (create) {
-    mFile.reset(SmartSExprFile::create(mFilepath));
-  } else {
-    mFile.reset(new SmartSExprFile(mFilepath, restore, readOnly));
-  }
+ErcMsgList::ErcMsgList(Project& project)
+  : QObject(&project), mProject(project) {
 }
 
 ErcMsgList::~ErcMsgList() noexcept {
@@ -87,34 +77,38 @@ void ErcMsgList::update(ErcMsg* ercMsg) noexcept {
 }
 
 void ErcMsgList::restoreIgnoreState() {
-  if (mFile->isCreated()) return;  // the file does not yet exist
+  QString fn = "circuit/erc.lp";
+  QString fp = mProject.getFileSystem().getPrettyPath(fn);
+  if (mProject.getFileSystem().fileExists(fn)) {
+    SExpression root =
+        SExpression::parse(mProject.getFileSystem().readText(fn), fp);
 
-  SExpression root = mFile->parseFileAndBuildDomTree();
+    // reset all ignore attributes
+    foreach (ErcMsg* ercMsg, mItems)
+      ercMsg->setIgnored(false);
 
-  // reset all ignore attributes
-  foreach (ErcMsg* ercMsg, mItems)
-    ercMsg->setIgnored(false);
-
-  // scan approved items and set ignore attributes
-  foreach (const SExpression& node, root.getChildren("approved")) {
-    foreach (ErcMsg* ercMsg, mItems) {
-      if ((ercMsg->getOwner().getErcMsgOwnerClassName() ==
-           node.getValueByPath<QString>("class")) &&
-          (ercMsg->getOwnerKey() == node.getValueByPath<QString>("instance")) &&
-          (ercMsg->getMsgKey() == node.getValueByPath<QString>("message"))) {
-        ercMsg->setIgnored(true);
+    // scan approved items and set ignore attributes
+    foreach (const SExpression& node, root.getChildren("approved")) {
+      foreach (ErcMsg* ercMsg, mItems) {
+        if ((ercMsg->getOwner().getErcMsgOwnerClassName() ==
+             node.getValueByPath<QString>("class")) &&
+            (ercMsg->getOwnerKey() ==
+             node.getValueByPath<QString>("instance")) &&
+            (ercMsg->getMsgKey() == node.getValueByPath<QString>("message"))) {
+          ercMsg->setIgnored(true);
+        }
       }
     }
   }
 }
 
-bool ErcMsgList::save(bool toOriginal, QStringList& errors) noexcept {
+bool ErcMsgList::save(QStringList& errors) noexcept {
   bool success = true;
 
   // Save "circuit/erc.lp"
   try {
     SExpression doc(serializeToDomElement("librepcb_erc"));
-    mFile->save(doc, toOriginal);
+    mProject.getFileSystem().writeText("circuit/erc.lp", doc.toString(0));
   } catch (Exception& e) {
     success = false;
     errors.append(e.getMsg());

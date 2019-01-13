@@ -47,11 +47,12 @@ public:
   // Constructors / Destructor
   PackageCategory()                             = delete;
   PackageCategory(const PackageCategory& other) = delete;
-  PackageCategory(const Uuid& uuid, const Version& version,
-                  const QString& author, const ElementName& name_en_US,
-                  const QString& description_en_US,
-                  const QString& keywords_en_US);
-  PackageCategory(const FilePath& elementDirectory, bool readOnly);
+  PackageCategory(const FileSystemRef& fileSystem, const Uuid& uuid,
+                  const Version& version, const QString& author,
+                  const ElementName& name_en_US,
+                  const QString&     description_en_US,
+                  const QString&     keywords_en_US);
+  explicit PackageCategory(const FileSystemRef& fileSystem);
   ~PackageCategory() noexcept;
 
   // Operator Overloadings

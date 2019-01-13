@@ -23,6 +23,7 @@
 /*******************************************************************************
  *  Includes
  ******************************************************************************/
+#include <librepcb/common/fileio/filesystemref.h>
 #include <librepcb/common/graphics/graphicslayername.h>
 
 #include <QtCore>
@@ -59,7 +60,8 @@ public:
   // Constructors / Destructor
   PackageConverter()                              = delete;
   PackageConverter(const PackageConverter& other) = delete;
-  PackageConverter(const parseagle::Package& package, ConverterDb& db) noexcept;
+  PackageConverter(const parseagle::Package& package, ConverterDb& db,
+                   const FileSystemRef& fs) noexcept;
   ~PackageConverter() noexcept;
 
   // General Methods
@@ -74,6 +76,7 @@ private:
 
   const parseagle::Package& mPackage;
   ConverterDb&              mDb;
+  FileSystemRef             mFileSystem;
 };
 
 /*******************************************************************************

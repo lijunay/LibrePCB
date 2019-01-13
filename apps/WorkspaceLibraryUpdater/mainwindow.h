@@ -36,7 +36,7 @@ private slots:
 
 private:
   template <typename ElementType>
-  void updateElements(const librepcb::library::Library& lib) noexcept;
+  void updateElements(librepcb::library::Library& lib) noexcept;
 
   // Attributes
   Ui::MainWindow* ui;

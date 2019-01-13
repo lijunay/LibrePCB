@@ -39,21 +39,22 @@ namespace library {
  *  Constructors / Destructor
  ******************************************************************************/
 
-LibraryElement::LibraryElement(const QString& shortElementName,
+LibraryElement::LibraryElement(const FileSystemRef& fileSystem,
+                               const QString&       shortElementName,
                                const QString& longElementName, const Uuid& uuid,
                                const Version& version, const QString& author,
                                const ElementName& name_en_US,
                                const QString&     description_en_US,
                                const QString&     keywords_en_US)
-  : LibraryBaseElement(true, shortElementName, longElementName, uuid, version,
-                       author, name_en_US, description_en_US, keywords_en_US) {
+  : LibraryBaseElement(fileSystem, shortElementName, longElementName, uuid,
+                       version, author, name_en_US, description_en_US,
+                       keywords_en_US) {
 }
 
-LibraryElement::LibraryElement(const FilePath& elementDirectory,
-                               const QString&  shortElementName,
-                               const QString& longElementName, bool readOnly)
-  : LibraryBaseElement(elementDirectory, true, shortElementName,
-                       longElementName, readOnly) {
+LibraryElement::LibraryElement(const FileSystemRef& fileSystem,
+                               const QString&       shortElementName,
+                               const QString&       longElementName)
+  : LibraryBaseElement(fileSystem, shortElementName, longElementName) {
   // read category UUIDs
   foreach (const SExpression& node,
            mLoadingFileDocument.getChildren("category")) {

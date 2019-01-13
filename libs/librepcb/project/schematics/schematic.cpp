@@ -33,7 +33,7 @@
 
 #include <librepcb/common/application.h>
 #include <librepcb/common/fileio/sexpression.h>
-#include <librepcb/common/fileio/smartsexprfile.h>
+#include <librepcb/common/fileio/transactionalfilesystem.h>
 #include <librepcb/common/graphics/graphicsscene.h>
 #include <librepcb/common/graphics/graphicsview.h>
 #include <librepcb/common/gridproperties.h>
@@ -52,12 +52,12 @@ namespace project {
  *  Constructors / Destructor
  ******************************************************************************/
 
-Schematic::Schematic(Project& project, const FilePath& filepath, bool restore,
-                     bool readOnly, bool create, const QString& newName)
+Schematic::Schematic(Project& project, const QString& filepath, bool create,
+                     const QString& newName)
   : QObject(&project),
     AttributeProvider(),
     mProject(project),
-    mFilePath(filepath),
+    mRelativePath(filepath),
     mIsAddedToProject(false),
     mUuid(Uuid::createRandom()),
     mName("New Page") {
@@ -66,16 +66,16 @@ Schematic::Schematic(Project& project, const FilePath& filepath, bool restore,
 
     // try to open/create the schematic file
     if (create) {
-      mFile.reset(SmartSExprFile::create(mFilePath));
-
       // set attributes
       mName = newName;
 
       // load default grid properties
       mGridProperties.reset(new GridProperties());
     } else {
-      mFile.reset(new SmartSExprFile(mFilePath, restore, readOnly));
-      SExpression root = mFile->parseFileAndBuildDomTree();
+      QString     fn = mRelativePath % "schematic.lp";
+      QString     fp = mProject.getFileSystem().getPrettyPath(fn);
+      SExpression root =
+          SExpression::parse(mProject.getFileSystem().readText(fn), fp);
 
       // the schematic seems to be ready to open, so we will create all needed
       // objects
@@ -126,7 +126,6 @@ Schematic::Schematic(Project& project, const FilePath& filepath, bool restore,
     qDeleteAll(mSymbols);
     mSymbols.clear();
     mGridProperties.reset();
-    mFile.reset();
     mGraphicsScene.reset();
     throw;  // ...and rethrow the exception
   }
@@ -142,7 +141,6 @@ Schematic::~Schematic() noexcept {
   mSymbols.clear();
 
   mGridProperties.reset();
-  mFile.reset();
   mGraphicsScene.reset();
 }
 
@@ -355,16 +353,17 @@ void Schematic::removeFromProject() {
   sgl.dismiss();
 }
 
-bool Schematic::save(bool toOriginal, QStringList& errors) noexcept {
+bool Schematic::save(QStringList& errors) noexcept {
   bool success = true;
 
   // save schematic file
   try {
     if (mIsAddedToProject) {
       SExpression doc(serializeToDomElement("librepcb_schematic"));
-      mFile->save(doc, toOriginal);
+      mProject.getFileSystem().writeText(mRelativePath % "schematic.lp",
+                                         doc.toString(0));
     } else {
-      mFile->removeFile(toOriginal);
+      mProject.getFileSystem().removeFile(mRelativePath % "schematic.lp");
     }
   } catch (Exception& e) {
     success = false;
@@ -470,9 +469,9 @@ void Schematic::serialize(SExpression& root) const {
  *  Static Methods
  ******************************************************************************/
 
-Schematic* Schematic::create(Project& project, const FilePath& filepath,
+Schematic* Schematic::create(Project& project, const QString& filepath,
                              const ElementName& name) {
-  return new Schematic(project, filepath, false, false, true, *name);
+  return new Schematic(project, filepath, true, *name);
 }
 
 /*******************************************************************************

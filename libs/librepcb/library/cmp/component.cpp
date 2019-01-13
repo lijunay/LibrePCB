@@ -38,20 +38,21 @@ namespace library {
  *  Constructors / Destructor
  ******************************************************************************/
 
-Component::Component(const Uuid& uuid, const Version& version,
-                     const QString& author, const ElementName& name_en_US,
-                     const QString& description_en_US,
-                     const QString& keywords_en_US)
-  : LibraryElement(getShortElementName(), getLongElementName(), uuid, version,
-                   author, name_en_US, description_en_US, keywords_en_US),
+Component::Component(const FileSystemRef& fileSystem, const Uuid& uuid,
+                     const Version& version, const QString& author,
+                     const ElementName& name_en_US,
+                     const QString&     description_en_US,
+                     const QString&     keywords_en_US)
+  : LibraryElement(fileSystem, getShortElementName(), getLongElementName(),
+                   uuid, version, author, name_en_US, description_en_US,
+                   keywords_en_US),
     mSchematicOnly(false),
     mDefaultValue(),
     mPrefixes(ComponentPrefix("")) {
 }
 
-Component::Component(const FilePath& elementDirectory, bool readOnly)
-  : LibraryElement(elementDirectory, getShortElementName(),
-                   getLongElementName(), readOnly),
+Component::Component(const FileSystemRef& fileSystem)
+  : LibraryElement(fileSystem, getShortElementName(), getLongElementName()),
     mSchematicOnly(false),
     mDefaultValue(),
     mPrefixes(ComponentPrefix("")) {

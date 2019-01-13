@@ -2,6 +2,7 @@
 
 #include "ui_mainwindow.h"
 
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/common/fileio/sexpression.h>
 #include <librepcb/library/elements.h>
 #include <librepcb/workspace/library/workspacelibrarydb.h>
@@ -86,10 +87,11 @@ void MainWindow::on_updateBtn_clicked() {
   ignoreCount  = 0;
   errorCount   = 0;
   for (int i = 0; i < ui->libDirs->count(); i++) {
-    QString dirStr = ui->libDirs->item(i)->text();
+    FilePath fp(ui->libDirs->item(i)->text());
 
     try {
-      library::Library lib(FilePath(dirStr), false);
+      DiskFileSystem   fs(fp, false);
+      library::Library lib(fs);
 
       if (ui->cbx_cmpcat->isChecked()) updateElements<ComponentCategory>(lib);
       if (ui->cbx_pkgcat->isChecked()) updateElements<PackageCategory>(lib);
@@ -116,17 +118,12 @@ void MainWindow::on_updateBtn_clicked() {
 }
 
 template <typename ElementType>
-void MainWindow::updateElements(const library::Library& lib) noexcept {
-  foreach (const FilePath& fp, lib.searchForElements<ElementType>()) {
-    if (fp.getBasename() == "00000000-0000-4001-8000-000000000000") {
-      // ignore demo files as they contain documentation which would be removed
-      ignoreCount++;
-      continue;
-    }
+void MainWindow::updateElements(library::Library& lib) noexcept {
+  foreach (const FileSystemRef& fs, lib.searchForElements<ElementType>()) {
     try {
-      ElementType element(fp, false);
+      ElementType element(fs);
       element.save();
-      ui->log->addItem(fp.toNative());
+      ui->log->addItem(fs.getPrettyPath());
       elementCount++;
     } catch (const Exception& e) {
       ui->log->addItem("ERROR: " % e.getMsg());

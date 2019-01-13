@@ -43,11 +43,10 @@ namespace editor {
  *  Constructors / Destructor
  ******************************************************************************/
 
-EditorWidgetBase::EditorWidgetBase(const Context& context, const FilePath& fp,
-                                   QWidget* parent)
+EditorWidgetBase::EditorWidgetBase(const Context& context, QWidget* parent)
   : QWidget(parent),
     mContext(context),
-    mFilePath(fp),
+    mFileSystem(new DiskFileSystem(context.filePath, context.readOnly)),
     mUndoStackActionGroup(nullptr),
     mToolsActionGroup(nullptr),
     mIsInterfaceBroken(false) {
@@ -113,7 +112,7 @@ bool EditorWidgetBase::save() noexcept {
   mUndoStack->setClean();
   emit dirtyChanged(false);
   emit interfaceBrokenChanged(false);
-  emit elementEdited(mFilePath);
+  emit elementEdited(mContext.filePath);
   return true;
 }
 

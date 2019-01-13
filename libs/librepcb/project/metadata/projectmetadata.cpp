@@ -25,7 +25,7 @@
 #include "../project.h"
 
 #include <librepcb/common/fileio/sexpression.h>
-#include <librepcb/common/fileio/smartsexprfile.h>
+#include <librepcb/common/fileio/transactionalfilesystem.h>
 
 #include <QtCore>
 
@@ -39,19 +39,14 @@ namespace project {
  *  Constructors / Destructor
  ******************************************************************************/
 
-ProjectMetadata::ProjectMetadata(Project& project, bool restore, bool readOnly,
-                                 bool create)
+ProjectMetadata::ProjectMetadata(Project& project, bool create)
   : QObject(nullptr),
     mProject(project),
-    mFilepath(project.getPath().getPathTo("project/metadata.lp")),
     mUuid(Uuid::createRandom()),
     mName("New Project") {
   qDebug() << "load project metadata...";
-  Q_ASSERT(!(create && (restore || readOnly)));
 
   if (create) {
-    mFile.reset(SmartSExprFile::create(mFilepath));
-
     try {
       mName = mProject.getFilepath().getCompleteBasename();
     } catch (const Exception&) {
@@ -61,8 +56,10 @@ ProjectMetadata::ProjectMetadata(Project& project, bool restore, bool readOnly,
     mVersion = "v1";
     mCreated = QDateTime::currentDateTime();
   } else {
-    mFile.reset(new SmartSExprFile(mFilepath, restore, readOnly));
-    SExpression root = mFile->parseFileAndBuildDomTree();
+    QString     fn = "project/metadata.lp";
+    QString     fp = mProject.getFileSystem().getPrettyPath(fn);
+    SExpression root =
+        SExpression::parse(mProject.getFileSystem().readText(fn), fp);
 
     if (root.getChildByIndex(0)
             .isString()) {  // backward compatibility, remove this some time!
@@ -125,12 +122,12 @@ void ProjectMetadata::updateLastModified() noexcept {
  *  General Methods
  ******************************************************************************/
 
-bool ProjectMetadata::save(bool toOriginal, QStringList& errors) noexcept {
+bool ProjectMetadata::save(QStringList& errors) noexcept {
   bool success = true;
 
   try {
     SExpression doc(serializeToDomElement("librepcb_project_metadata"));
-    mFile->save(doc, toOriginal);
+    mProject.getFileSystem().writeText("project/metadata.lp", doc.toString(0));
   } catch (const Exception& e) {
     success = false;
     errors.append(e.getMsg());

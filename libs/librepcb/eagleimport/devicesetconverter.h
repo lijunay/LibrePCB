@@ -23,6 +23,8 @@
 /*******************************************************************************
  *  Includes
  ******************************************************************************/
+#include <librepcb/common/fileio/filesystemref.h>
+
 #include <QtCore>
 
 #include <memory>
@@ -57,8 +59,8 @@ public:
   // Constructors / Destructor
   DeviceSetConverter()                                = delete;
   DeviceSetConverter(const DeviceSetConverter& other) = delete;
-  DeviceSetConverter(const parseagle::DeviceSet& deviceSet,
-                     ConverterDb&                db) noexcept;
+  DeviceSetConverter(const parseagle::DeviceSet& deviceSet, ConverterDb& db,
+                     const FileSystemRef& fs) noexcept;
   ~DeviceSetConverter() noexcept;
 
   // General Methods
@@ -72,6 +74,7 @@ private:
 
   const parseagle::DeviceSet& mDeviceSet;
   ConverterDb&                mDb;
+  FileSystemRef               mFileSystem;
 };
 
 /*******************************************************************************

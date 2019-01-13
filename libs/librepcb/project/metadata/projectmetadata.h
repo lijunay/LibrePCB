@@ -34,9 +34,6 @@
  *  Namespace / Forward Declarations
  ******************************************************************************/
 namespace librepcb {
-
-class SmartSExprFile;
-
 namespace project {
 
 class Project;
@@ -58,7 +55,7 @@ public:
   // Constructors / Destructor
   ProjectMetadata()                             = delete;
   ProjectMetadata(const ProjectMetadata& other) = delete;
-  ProjectMetadata(Project& project, bool restore, bool readOnly, bool create);
+  ProjectMetadata(Project& project, bool create);
   ~ProjectMetadata() noexcept;
 
   // Getters
@@ -154,7 +151,7 @@ public:
   void updateLastModified() noexcept;
 
   // General Methods
-  bool save(bool toOriginal, QStringList& errors) noexcept;
+  bool save(QStringList& errors) noexcept;
 
   // Operator Overloadings
   ProjectMetadata& operator=(const ProjectMetadata& rhs) = delete;
@@ -169,10 +166,6 @@ private:  // Methods
 private:  // Data
   // General
   Project& mProject;  ///< a reference to the Project object (from the ctor)
-
-  // File "project/metadata.lp"
-  FilePath                       mFilepath;
-  QScopedPointer<SmartSExprFile> mFile;
 
   // Metadata
   Uuid        mUuid;          ///< the UUID of the project

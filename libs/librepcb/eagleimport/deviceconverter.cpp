@@ -41,8 +41,9 @@ namespace eagleimport {
 
 DeviceConverter::DeviceConverter(const parseagle::DeviceSet& deviceSet,
                                  const parseagle::Device&    device,
-                                 ConverterDb&                db) noexcept
-  : mDeviceSet(deviceSet), mDevice(device), mDb(db) {
+                                 ConverterDb&                db,
+                                 const FileSystemRef&        fs) noexcept
+  : mDeviceSet(deviceSet), mDevice(device), mDb(db), mFileSystem(fs) {
 }
 
 DeviceConverter::~DeviceConverter() noexcept {
@@ -61,7 +62,7 @@ std::unique_ptr<library::Device> DeviceConverter::generate() const {
   Uuid compUuid = mDb.getComponentUuid(mDeviceSet.getName());
   Uuid pkgUuid  = mDb.getPackageUuid(mDevice.getPackage());
   std::unique_ptr<library::Device> device(new library::Device(
-      mDb.getDeviceUuid(mDeviceSet.getName(), mDevice.getName()),
+      mFileSystem, mDb.getDeviceUuid(mDeviceSet.getName(), mDevice.getName()),
       Version::fromString("0.1"), "LibrePCB", ElementName(deviceName),
       createDescription(), "", compUuid, pkgUuid));  // can throw
 

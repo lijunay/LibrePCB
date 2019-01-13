@@ -39,11 +39,13 @@ namespace library {
  *  Constructors / Destructor
  ******************************************************************************/
 
-Symbol::Symbol(const Uuid& uuid, const Version& version, const QString& author,
+Symbol::Symbol(const FileSystemRef& fileSystem, const Uuid& uuid,
+               const Version& version, const QString& author,
                const ElementName& name_en_US, const QString& description_en_US,
                const QString& keywords_en_US)
-  : LibraryElement(getShortElementName(), getLongElementName(), uuid, version,
-                   author, name_en_US, description_en_US, keywords_en_US),
+  : LibraryElement(fileSystem, getShortElementName(), getLongElementName(),
+                   uuid, version, author, name_en_US, description_en_US,
+                   keywords_en_US),
     mPins(this),
     mPolygons(this),
     mCircles(this),
@@ -51,9 +53,8 @@ Symbol::Symbol(const Uuid& uuid, const Version& version, const QString& author,
     mRegisteredGraphicsItem(nullptr) {
 }
 
-Symbol::Symbol(const FilePath& elementDirectory, bool readOnly)
-  : LibraryElement(elementDirectory, getShortElementName(),
-                   getLongElementName(), readOnly),
+Symbol::Symbol(const FileSystemRef& fileSystem)
+  : LibraryElement(fileSystem, getShortElementName(), getLongElementName()),
     mPins(this),
     mPolygons(this),
     mCircles(this),

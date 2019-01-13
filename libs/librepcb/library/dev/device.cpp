@@ -36,21 +36,22 @@ namespace library {
  *  Constructors / Destructor
  ******************************************************************************/
 
-Device::Device(const Uuid& uuid, const Version& version, const QString& author,
+Device::Device(const FileSystemRef& fileSystem, const Uuid& uuid,
+               const Version& version, const QString& author,
                const ElementName& name_en_US, const QString& description_en_US,
                const QString& keywords_en_US, const Uuid& component,
                const Uuid& package)
-  : LibraryElement(getShortElementName(), getLongElementName(), uuid, version,
-                   author, name_en_US, description_en_US, keywords_en_US),
+  : LibraryElement(fileSystem, getShortElementName(), getLongElementName(),
+                   uuid, version, author, name_en_US, description_en_US,
+                   keywords_en_US),
     mComponentUuid(component),
     mPackageUuid(package),
     mAttributes(),
     mPadSignalMap() {
 }
 
-Device::Device(const FilePath& elementDirectory, bool readOnly)
-  : LibraryElement(elementDirectory, getShortElementName(),
-                   getLongElementName(), readOnly),
+Device::Device(const FileSystemRef& fileSystem)
+  : LibraryElement(fileSystem, getShortElementName(), getLongElementName()),
     mComponentUuid(mLoadingFileDocument.getValueByPath<Uuid>("component")),
     mPackageUuid(mLoadingFileDocument.getValueByPath<Uuid>("package")),
     mAttributes(mLoadingFileDocument),

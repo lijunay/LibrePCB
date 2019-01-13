@@ -22,6 +22,7 @@
  ******************************************************************************/
 #include "librarydownload.h"
 
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/common/fileio/fileutils.h>
 #include <librepcb/common/network/filedownload.h>
 #include <librepcb/library/library.h>
@@ -180,19 +181,20 @@ void LibraryDownload::downloadSucceeded() noexcept {
 }
 
 FilePath LibraryDownload::getPathToLibDir() noexcept {
-  if (library::Library::isValidElementDirectory<library::Library>(
-          mTempDestDir)) {
+  DiskFileSystem fs(mTempDestDir, true);
+
+  if (library::Library::isValidElementDirectory<library::Library>(fs)) {
     return mTempDestDir;
   }
 
-  QStringList subdirs =
-      QDir(mTempDestDir.toStr()).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+  QStringList subdirs = fs.getSubDirs();
   if (subdirs.count() != 1) {
     return FilePath();
   }
 
-  FilePath subdir = mTempDestDir.getPathTo(subdirs.first());
-  if (library::Library::isValidElementDirectory<library::Library>(subdir)) {
+  FilePath      subdir = mTempDestDir.getPathTo(subdirs.first());
+  FileSystemRef subdirFs(fs, subdirs.first());
+  if (library::Library::isValidElementDirectory<library::Library>(subdirFs)) {
     return subdir;
   } else {
     return FilePath();

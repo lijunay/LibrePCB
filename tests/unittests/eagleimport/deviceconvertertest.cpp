@@ -21,6 +21,7 @@
  *  Includes
  ******************************************************************************/
 #include <gtest/gtest.h>
+#include <librepcb/common/fileio/transactionalfilesystem.h>
 #include <librepcb/eagleimport/converterdb.h>
 #include <librepcb/eagleimport/deviceconverter.h>
 #include <librepcb/library/dev/device.h>
@@ -61,7 +62,8 @@ TEST_F(DeviceConverterTest, testConversion) {
   ConverterDb db(testDataDir.getPathTo("db.ini"));
 
   // convert device set
-  DeviceConverter                  converter(eagleDeviceSet, eagleDevice, db);
+  TransactionalFileSystem fs;
+  DeviceConverter         converter(eagleDeviceSet, eagleDevice, db, fs);
   std::unique_ptr<library::Device> device = converter.generate();
 }
 

@@ -48,10 +48,9 @@ namespace editor {
  *  Constructors / Destructor
  ******************************************************************************/
 
-ComponentEditorWidget::ComponentEditorWidget(const Context&  context,
-                                             const FilePath& fp,
-                                             QWidget*        parent)
-  : EditorWidgetBase(context, fp, parent), mUi(new Ui::ComponentEditorWidget) {
+ComponentEditorWidget::ComponentEditorWidget(const Context& context,
+                                             QWidget*       parent)
+  : EditorWidgetBase(context, parent), mUi(new Ui::ComponentEditorWidget) {
   mUi->setupUi(this);
   mUi->lstMessages->setHandler(this);
   setupErrorNotificationWidget(*mUi->errorNotificationWidget);
@@ -68,7 +67,7 @@ ComponentEditorWidget::ComponentEditorWidget(const Context&  context,
                              mCategoriesEditorWidget.data());
 
   // Load element.
-  mComponent.reset(new Component(fp, false));  // can throw
+  mComponent.reset(new Component(*mFileSystem));  // can throw
   mUi->signalEditorWidget->setReferences(mUndoStack.data(),
                                          &mComponent->getSignals());
   mUi->symbolVariantsEditorWidget->setReferences(

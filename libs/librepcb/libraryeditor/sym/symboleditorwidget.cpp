@@ -61,9 +61,8 @@ namespace editor {
  *  Constructors / Destructor
  ******************************************************************************/
 
-SymbolEditorWidget::SymbolEditorWidget(const Context&  context,
-                                       const FilePath& fp, QWidget* parent)
-  : EditorWidgetBase(context, fp, parent),
+SymbolEditorWidget::SymbolEditorWidget(const Context& context, QWidget* parent)
+  : EditorWidgetBase(context, parent),
     mUi(new Ui::SymbolEditorWidget),
     mGraphicsScene(new GraphicsScene()) {
   mUi->setupUi(this);
@@ -87,7 +86,7 @@ SymbolEditorWidget::SymbolEditorWidget(const Context&  context,
                              mCategoriesEditorWidget.data());
 
   // Load element.
-  mSymbol.reset(new Symbol(fp, false));  // can throw
+  mSymbol.reset(new Symbol(*mFileSystem));  // can throw
   updateMetadata();
 
   // Show "interface broken" warning when related properties are modified.

@@ -26,6 +26,7 @@
 #include "../common/libraryelementchecklistwidget.h"
 
 #include <librepcb/common/exceptions.h>
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/common/fileio/filepath.h>
 #include <librepcb/common/undostack.h>
 #include <librepcb/common/units/all_length_units.h>
@@ -73,6 +74,8 @@ public:
   struct Context {
     workspace::Workspace&           workspace;
     const IF_GraphicsLayerProvider& layerProvider;
+    FilePath                        filePath;
+    bool                            readOnly;
     bool                            elementIsNewlyCreated;
   };
 
@@ -95,12 +98,11 @@ public:
   // Constructors / Destructor
   EditorWidgetBase()                              = delete;
   EditorWidgetBase(const EditorWidgetBase& other) = delete;
-  explicit EditorWidgetBase(const Context& context, const FilePath& fp,
-                            QWidget* parent = nullptr);
+  explicit EditorWidgetBase(const Context& context, QWidget* parent = nullptr);
   virtual ~EditorWidgetBase() noexcept;
 
   // Getters
-  const FilePath& getFilePath() const noexcept { return mFilePath; }
+  const FilePath& getFilePath() const noexcept { return mContext.filePath; }
   bool            isDirty() const noexcept { return !mUndoStack->isClean(); }
   virtual bool    hasGraphicalEditor() const noexcept { return false; }
 
@@ -160,13 +162,13 @@ signals:
   void cursorPositionChanged(const Point& pos);
 
 protected:  // Data
-  Context                      mContext;
-  FilePath                     mFilePath;
-  QScopedPointer<UndoStack>    mUndoStack;
-  UndoStackActionGroup*        mUndoStackActionGroup;
-  ExclusiveActionGroup*        mToolsActionGroup;
-  QScopedPointer<ToolBarProxy> mCommandToolBarProxy;
-  bool                         mIsInterfaceBroken;
+  Context                        mContext;
+  QScopedPointer<DiskFileSystem> mFileSystem;
+  QScopedPointer<UndoStack>      mUndoStack;
+  UndoStackActionGroup*          mUndoStackActionGroup;
+  ExclusiveActionGroup*          mToolsActionGroup;
+  QScopedPointer<ToolBarProxy>   mCommandToolBarProxy;
+  bool                           mIsInterfaceBroken;
 };
 
 /*******************************************************************************

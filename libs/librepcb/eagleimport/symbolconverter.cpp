@@ -41,8 +41,9 @@ namespace eagleimport {
  ******************************************************************************/
 
 SymbolConverter::SymbolConverter(const parseagle::Symbol& symbol,
-                                 ConverterDb&             db) noexcept
-  : mSymbol(symbol), mDb(db) {
+                                 ConverterDb&             db,
+                                 const FileSystemRef&     fs) noexcept
+  : mSymbol(symbol), mDb(db), mFileSystem(fs) {
 }
 
 SymbolConverter::~SymbolConverter() noexcept {
@@ -53,10 +54,11 @@ SymbolConverter::~SymbolConverter() noexcept {
  ******************************************************************************/
 
 std::unique_ptr<library::Symbol> SymbolConverter::generate() const {
-  std::unique_ptr<library::Symbol> symbol(new library::Symbol(
-      mDb.getSymbolUuid(mSymbol.getName()), Version::fromString("0.1"),
-      "LibrePCB", ElementName(mSymbol.getName()), createDescription(),
-      ""));  // can throw
+  std::unique_ptr<library::Symbol> symbol(
+      new library::Symbol(mFileSystem, mDb.getSymbolUuid(mSymbol.getName()),
+                          Version::fromString("0.1"), "LibrePCB",
+                          ElementName(mSymbol.getName()), createDescription(),
+                          ""));  // can throw
 
   foreach (const parseagle::Wire& wire, mSymbol.getWires()) {
     GraphicsLayerName layerName  = convertSchematicLayer(wire.getLayer());

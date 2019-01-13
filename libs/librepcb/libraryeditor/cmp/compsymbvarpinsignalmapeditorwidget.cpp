@@ -24,6 +24,7 @@
 
 #include "cmpsigpindisplaytypecombobox.h"
 
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/library/cmp/component.h>
 #include <librepcb/library/sym/symbol.h>
 #include <librepcb/workspace/library/workspacelibrarydb.h>
@@ -149,8 +150,9 @@ void CompSymbVarPinSignalMapEditorWidget::
   try {
     for (ComponentSymbolVariantItem& item : mSymbolVariant->getSymbolItems()) {
       FilePath fp = mWorkspace->getLibraryDb().getLatestSymbol(
-          item.getSymbolUuid());  // can throw
-      Symbol symbol(fp, true);    // can throw
+          item.getSymbolUuid());    // can throw
+      DiskFileSystem fs(fp, true);  // can throw
+      Symbol         symbol(fs);    // can throw
       for (ComponentPinSignalMapItem& map : item.getPinSignalMap()) {
         CircuitIdentifier pinName =
             symbol.getPins().get(map.getPinUuid())->getName();
@@ -187,11 +189,13 @@ void CompSymbVarPinSignalMapEditorWidget::updateTable(
   for (int i = 0; i < mSymbolVariant->getSymbolItems().count(); ++i) {
     const ComponentSymbolVariantItem& item =
         *mSymbolVariant->getSymbolItems().at(i);
-    QScopedPointer<Symbol> symbol;
+    QScopedPointer<DiskFileSystem> fs;
+    QScopedPointer<Symbol>         symbol;
     try {
       FilePath fp = mWorkspace->getLibraryDb().getLatestSymbol(
-          item.getSymbolUuid());           // can throw
-      symbol.reset(new Symbol(fp, true));  // can throw
+          item.getSymbolUuid());               // can throw
+      fs.reset(new DiskFileSystem(fp, true));  // can throw
+      symbol.reset(new Symbol(*fs));           // can throw
     } catch (const Exception& e) {
       // what could we do here?
     }

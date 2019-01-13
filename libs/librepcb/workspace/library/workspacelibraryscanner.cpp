@@ -24,6 +24,7 @@
 
 #include "../workspace.h"
 
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/common/sqlitedatabase.h>
 #include <librepcb/library/elements.h>
 
@@ -113,13 +114,21 @@ void WorkspaceLibraryScanner::scan() noexcept {
     // open SQLite database
     SQLiteDatabase db(mDbFilePath);  // can throw
 
-    // update list of libraries
+    // get all available libraries
+    DiskFileSystem fs(mWorkspace.getLibrariesPath(), true);
+    FileSystemRef  localLibsDir(
+        fs, mWorkspace.getLocalLibrariesPath().toRelative(fs.getRoot()));
+    FileSystemRef remoteLibsDir(
+        fs, mWorkspace.getRemoteLibrariesPath().toRelative(fs.getRoot()));
+
     QHash<FilePath, std::shared_ptr<Library>> libraries;
-    getLibrariesOfDirectory(mWorkspace.getLocalLibrariesPath(), libraries);
-    getLibrariesOfDirectory(mWorkspace.getRemoteLibrariesPath(), libraries);
+    getLibrariesOfDirectory(localLibsDir, libraries);
+    getLibrariesOfDirectory(remoteLibsDir, libraries);
+
+    // update list of libraries in database
     QHash<FilePath, int> libIds = updateLibraries(db, libraries);  // can throw
     emit                 scanLibraryListUpdated(libIds.count());
-    qDebug() << "Workspace libraries indexed:" << libIds.count()
+    qDebug() << "Workspace libraries indexed:" << libraries.count()
              << "libraries in" << timer.elapsed() << "ms";
 
     // begin database transaction
@@ -183,21 +192,22 @@ void WorkspaceLibraryScanner::scan() noexcept {
 }
 
 void WorkspaceLibraryScanner::getLibrariesOfDirectory(
-    const FilePath&                            dir,
+    const FileSystemRef&                       dir,
     QHash<FilePath, std::shared_ptr<Library>>& libs) noexcept {
-  foreach (const QString& name,
-           QDir(dir.toStr()).entryList(QDir::AllDirs | QDir::NoDotAndDotDot)) {
-    FilePath libDirPath = dir.getPathTo(name);
-    if (Library::isValidElementDirectory<Library>(libDirPath)) {
+  foreach (const QString& name, dir.getSubDirs()) {
+    FileSystemRef libDir = FileSystemRef(dir).getRefToDir(name);
+    if (Library::isValidElementDirectory<Library>(libDir)) {
       try {
-        libs.insert(libDirPath, std::make_shared<Library>(libDirPath, true));
+        FilePath libDirPath = refToFilePath(libDir);  // can throw
+        libs.insert(libDirPath, std::make_shared<Library>(libDir));
       } catch (Exception& e) {
         qCritical() << "Could not open workspace library!";
-        qCritical() << "Library:" << libDirPath.toNative();
+        qCritical() << "Library:" << libDir.getPrettyPath();
         qCritical() << "Error:" << e.getMsg();
       }
     } else {
-      qWarning() << "Directory is not a valid libary:" << libDirPath.toNative();
+      qWarning() << "Directory is not a valid libary:"
+                 << libDir.getPrettyPath();
     }
   }
 }
@@ -321,16 +331,17 @@ void WorkspaceLibraryScanner::clearAllTables(SQLiteDatabase& db) {
 }
 
 template <typename ElementType>
-int WorkspaceLibraryScanner::addCategoriesToDb(SQLiteDatabase&        db,
-                                               const QList<FilePath>& dirs,
-                                               const QString&         table,
-                                               const QString&         idColumn,
-                                               int                    libId) {
+int WorkspaceLibraryScanner::addCategoriesToDb(SQLiteDatabase&             db,
+                                               const QList<FileSystemRef>& dirs,
+                                               const QString& table,
+                                               const QString& idColumn,
+                                               int            libId) {
   int count = 0;
-  foreach (const FilePath& filepath, dirs) {
+  foreach (const FileSystemRef& dir, dirs) {
     if (mAbort || (mSemaphore.available() > 0)) break;
     try {
-      ElementType element(filepath, true);  // can throw
+      FilePath    filepath = refToFilePath(dir);  // can throw
+      ElementType element(dir);                   // can throw
       QSqlQuery   query = db.prepareQuery(
           "INSERT INTO " % table %
           " "
@@ -366,23 +377,24 @@ int WorkspaceLibraryScanner::addCategoriesToDb(SQLiteDatabase&        db,
       }
       count++;
     } catch (const Exception& e) {
-      qWarning() << "Failed to open library element:" << filepath.toNative();
+      qWarning() << "Failed to open library element:" << dir.getPrettyPath();
     }
   }
   return count;
 }
 
 template <typename ElementType>
-int WorkspaceLibraryScanner::addElementsToDb(SQLiteDatabase&        db,
-                                             const QList<FilePath>& dirs,
-                                             const QString&         table,
-                                             const QString&         idColumn,
-                                             int                    libId) {
+int WorkspaceLibraryScanner::addElementsToDb(SQLiteDatabase&             db,
+                                             const QList<FileSystemRef>& dirs,
+                                             const QString&              table,
+                                             const QString& idColumn,
+                                             int            libId) {
   int count = 0;
-  foreach (const FilePath& filepath, dirs) {
+  foreach (const FileSystemRef& dir, dirs) {
     if (mAbort || (mSemaphore.available() > 0)) break;
     try {
-      ElementType element(filepath, true);  // can throw
+      FilePath    filepath = refToFilePath(dir);  // can throw
+      ElementType element(dir);                   // can throw
       QSqlQuery   query =
           db.prepareQuery("INSERT INTO " % table %
                           " "
@@ -426,22 +438,23 @@ int WorkspaceLibraryScanner::addElementsToDb(SQLiteDatabase&        db,
       }
       count++;
     } catch (const Exception& e) {
-      qWarning() << "Failed to open library element:" << filepath.toNative();
+      qWarning() << "Failed to open library element:" << dir.getPrettyPath();
     }
   }
   return count;
 }
 
-int WorkspaceLibraryScanner::addDevicesToDb(SQLiteDatabase&        db,
-                                            const QList<FilePath>& dirs,
-                                            const QString&         table,
-                                            const QString&         idColumn,
-                                            int                    libId) {
+int WorkspaceLibraryScanner::addDevicesToDb(SQLiteDatabase&             db,
+                                            const QList<FileSystemRef>& dirs,
+                                            const QString&              table,
+                                            const QString& idColumn,
+                                            int            libId) {
   int count = 0;
-  foreach (const FilePath& filepath, dirs) {
+  foreach (const FileSystemRef& dir, dirs) {
     if (mAbort || (mSemaphore.available() > 0)) break;
     try {
-      Device    element(filepath, true);  // can throw
+      FilePath  filepath = refToFilePath(dir);  // can throw
+      Device    element(dir);                   // can throw
       QSqlQuery query = db.prepareQuery("INSERT INTO " % table %
                                         " "
                                         "(lib_id, filepath, uuid, version, "
@@ -488,10 +501,22 @@ int WorkspaceLibraryScanner::addDevicesToDb(SQLiteDatabase&        db,
       }
       count++;
     } catch (const Exception& e) {
-      qWarning() << "Failed to open library element:" << filepath.toNative();
+      qWarning() << "Failed to open library element:" << dir.getPrettyPath();
     }
   }
   return count;
+}
+
+FilePath WorkspaceLibraryScanner::refToFilePath(const FileSystemRef& ref) {
+  if (DiskFileSystem* fs =
+          dynamic_cast<DiskFileSystem*>(ref.getFileSystem().data())) {
+    return fs->getRoot().getPathTo(ref.getRoot());
+  } else if (FileSystemRef* fs =
+                 dynamic_cast<FileSystemRef*>(ref.getFileSystem().data())) {
+    return refToFilePath(*fs).getPathTo(ref.getRoot());
+  } else {
+    throw LogicError(__FILE__, __LINE__);
+  }
 }
 
 /*******************************************************************************

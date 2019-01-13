@@ -34,6 +34,7 @@
  ******************************************************************************/
 namespace librepcb {
 
+class DiskFileSystem;
 class DefaultGraphicsLayerProvider;
 class GraphicsScene;
 
@@ -94,6 +95,7 @@ private:  // Data
   QScopedPointer<GraphicsScene>                        mGraphicsScene;
   QScopedPointer<DefaultGraphicsLayerProvider>         mGraphicsLayerProvider;
 
+  QList<std::shared_ptr<DiskFileSystem>>     mSymbolFileSystems;
   QList<std::shared_ptr<Symbol>>             mSymbols;
   QList<std::shared_ptr<SymbolGraphicsItem>> mGraphicsItems;
 };

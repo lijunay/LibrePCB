@@ -49,15 +49,16 @@ public:
   // Constructors / Destructor
   LibraryElement()                            = delete;
   LibraryElement(const LibraryElement& other) = delete;
-  LibraryElement(const QString& shortElementName,
+  LibraryElement(const FileSystemRef& fileSystem,
+                 const QString&       shortElementName,
                  const QString& longElementName, const Uuid& uuid,
                  const Version& version, const QString& author,
                  const ElementName& name_en_US,
                  const QString&     description_en_US,
                  const QString&     keywords_en_US);
-  LibraryElement(const FilePath& elementDirectory,
-                 const QString&  shortElementName,
-                 const QString& longElementName, bool readOnly);
+  LibraryElement(const FileSystemRef& fileSystem,
+                 const QString&       shortElementName,
+                 const QString&       longElementName);
   virtual ~LibraryElement() noexcept;
 
   // Getters: Attributes

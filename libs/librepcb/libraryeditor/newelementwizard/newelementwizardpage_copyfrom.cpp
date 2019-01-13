@@ -24,6 +24,7 @@
 
 #include "ui_newelementwizardpage_copyfrom.h"
 
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/library/elements.h>
 #include <librepcb/workspace/library/cat/categorytreemodel.h>
 #include <librepcb/workspace/library/workspacelibrarydb.h>
@@ -320,35 +321,41 @@ void NewElementWizardPage_CopyFrom::setSelectedCategory(
 
 void NewElementWizardPage_CopyFrom::setSelectedElement(
     const FilePath& fp) noexcept {
-  if (mSelectedElement && (mSelectedElement->getFilePath() == fp)) return;
+  if (mSelectedElementFileSystem &&
+      (mSelectedElementFileSystem->getRoot() == fp))
+    return;
 
   mSelectedElement.reset();
 
   if (fp.isValid()) {
     try {
+      mSelectedElementFileSystem.reset(
+          new DiskFileSystem(fp, true));  // can throw
       switch (mContext.mElementType) {
         case NewElementWizardContext::ElementType::ComponentCategory: {
-          mSelectedElement.reset(new ComponentCategory(fp, true));
+          mSelectedElement.reset(
+              new ComponentCategory(*mSelectedElementFileSystem));
           break;
         }
         case NewElementWizardContext::ElementType::PackageCategory: {
-          mSelectedElement.reset(new PackageCategory(fp, true));
+          mSelectedElement.reset(
+              new PackageCategory(*mSelectedElementFileSystem));
           break;
         }
         case NewElementWizardContext::ElementType::Symbol: {
-          mSelectedElement.reset(new Symbol(fp, true));
+          mSelectedElement.reset(new Symbol(*mSelectedElementFileSystem));
           break;
         }
         case NewElementWizardContext::ElementType::Component: {
-          mSelectedElement.reset(new Component(fp, true));
+          mSelectedElement.reset(new Component(*mSelectedElementFileSystem));
           break;
         }
         case NewElementWizardContext::ElementType::Device: {
-          mSelectedElement.reset(new Device(fp, true));
+          mSelectedElement.reset(new Device(*mSelectedElementFileSystem));
           break;
         }
         case NewElementWizardContext::ElementType::Package: {
-          mSelectedElement.reset(new Package(fp, true));
+          mSelectedElement.reset(new Package(*mSelectedElementFileSystem));
           break;
         }
         default: {

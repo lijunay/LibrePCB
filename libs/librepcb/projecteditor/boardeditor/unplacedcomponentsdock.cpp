@@ -26,6 +26,7 @@
 #include "../projecteditor.h"
 #include "ui_unplacedcomponentsdock.h"
 
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/common/graphics/defaultgraphicslayerprovider.h>
 #include <librepcb/common/graphics/graphicsscene.h>
 #include <librepcb/common/graphics/graphicsview.h>
@@ -63,11 +64,10 @@ UnplacedComponentsDock::UnplacedComponentsDock(ProjectEditor& editor)
     mProject(editor.getProject()),
     mBoard(nullptr),
     mUi(new Ui::UnplacedComponentsDock),
-    mFootprintPreviewGraphicsScene(nullptr),
-    mFootprintPreviewGraphicsItem(nullptr),
+    mFootprintPreviewGraphicsScene(new GraphicsScene()),
     mSelectedComponent(nullptr),
-    mSelectedDevice(nullptr),
-    mSelectedPackage(nullptr),
+    mSelectedDeviceUuid(),
+    mSelectedPackage(),
     mSelectedFootprintUuid(),
     mCircuitConnection1(),
     mCircuitConnection2(),
@@ -75,10 +75,9 @@ UnplacedComponentsDock::UnplacedComponentsDock(ProjectEditor& editor)
     mBoardConnection2(),
     mDisableListUpdate(false) {
   mUi->setupUi(this);
-  mFootprintPreviewGraphicsScene = new GraphicsScene();
   mUi->graphicsView->setBackgroundBrush(QBrush(Qt::black, Qt::SolidPattern));
   mUi->graphicsView->setOriginCrossVisible(false);
-  mUi->graphicsView->setScene(mFootprintPreviewGraphicsScene);
+  mUi->graphicsView->setScene(mFootprintPreviewGraphicsScene.data());
 
   mGraphicsLayerProvider.reset(new DefaultGraphicsLayerProvider());
 
@@ -114,12 +113,6 @@ UnplacedComponentsDock::~UnplacedComponentsDock() {
   mCircuitConnection1 = QMetaObject::Connection();
   disconnect(mCircuitConnection2);
   mCircuitConnection2 = QMetaObject::Connection();
-  delete mFootprintPreviewGraphicsItem;
-  mFootprintPreviewGraphicsItem = nullptr;
-  delete mFootprintPreviewGraphicsScene;
-  mFootprintPreviewGraphicsScene = nullptr;
-  delete mUi;
-  mUi = nullptr;
 }
 
 /*******************************************************************************
@@ -190,13 +183,16 @@ void UnplacedComponentsDock::on_cbxSelectedDevice_currentIndexChanged(
       devFp = mProjectEditor.getWorkspace().getLibraryDb().getLatestDevice(
           *deviceUuid);
     if (devFp.isValid()) {
-      const library::Device* device = new library::Device(devFp, true);
-      FilePath               pkgFp =
+      DiskFileSystem        devFs(devFp, true);
+      const library::Device device(devFs);
+      FilePath              pkgFp =
           mProjectEditor.getWorkspace().getLibraryDb().getLatestPackage(
-              device->getPackageUuid());
+              device.getPackageUuid());
       if (pkgFp.isValid()) {
-        const library::Package* package = new library::Package(pkgFp, true);
-        setSelectedDeviceAndPackage(device, package);
+        mSelectedPackageFileSystem.reset(new DiskFileSystem(pkgFp, true));
+        const library::Package* package =
+            new library::Package(*mSelectedPackageFileSystem);
+        setSelectedDeviceAndPackage(&device, package);
       } else {
         setSelectedDeviceAndPackage(nullptr, nullptr);
       }
@@ -216,21 +212,20 @@ void UnplacedComponentsDock::on_cbxSelectedFootprint_currentIndexChanged(
 }
 
 void UnplacedComponentsDock::on_btnAdd_clicked() {
-  if (mBoard && mSelectedComponent && mSelectedDevice && mSelectedPackage &&
+  if (mBoard && mSelectedComponent && mSelectedDeviceUuid && mSelectedPackage &&
       mSelectedFootprintUuid) {
-    addDeviceManually(*mSelectedComponent, mSelectedDevice->getUuid(),
+    addDeviceManually(*mSelectedComponent, *mSelectedDeviceUuid,
                       *mSelectedFootprintUuid);
   }
   updateComponentsList();
 }
 
 void UnplacedComponentsDock::on_pushButton_clicked() {
-  if ((!mBoard) || (!mSelectedComponent) || (!mSelectedDevice) ||
+  if ((!mBoard) || (!mSelectedComponent) || (!mSelectedDeviceUuid) ||
       (!mSelectedPackage) || (!mSelectedFootprintUuid))
     return;
 
   Uuid componentLibUuid = mSelectedComponent->getLibComponent().getUuid();
-  Uuid deviceLibUuid    = mSelectedDevice->getUuid();
 
   beginUndoCmdGroup();
   for (int i = 0; i < mUi->lstUnplacedComponents->count(); i++) {
@@ -241,7 +236,8 @@ void UnplacedComponentsDock::on_pushButton_clicked() {
         mProject.getCircuit().getComponentInstanceByUuid(*componentUuid);
     if (!component) continue;
     if (component->getLibComponent().getUuid() != componentLibUuid) continue;
-    addNextDeviceToCmdGroup(*component, deviceLibUuid, *mSelectedFootprintUuid);
+    addNextDeviceToCmdGroup(*component, *mSelectedDeviceUuid,
+                            *mSelectedFootprintUuid);
   }
   commitUndoCmdGroup();
 
@@ -390,16 +386,15 @@ void UnplacedComponentsDock::setSelectedDeviceAndPackage(
     const library::Device* device, const library::Package* package) noexcept {
   setSelectedFootprintUuid(tl::nullopt);
   mUi->cbxSelectedFootprint->clear();
-  delete mSelectedPackage;
-  mSelectedPackage = nullptr;
-  delete mSelectedDevice;
-  mSelectedDevice = nullptr;
+  mSelectedPackage.reset();
+  mSelectedPackageFileSystem.reset();
+  mSelectedDeviceUuid.reset();
 
   if (mBoard && mSelectedComponent && device && package) {
     if (device->getComponentUuid() ==
         mSelectedComponent->getLibComponent().getUuid()) {
-      mSelectedDevice         = device;
-      mSelectedPackage        = package;
+      mSelectedDeviceUuid = device->getUuid();
+      mSelectedPackage.reset(package);
       QStringList localeOrder = mProject.getSettings().getLocaleOrder();
       for (const library::Footprint& fpt : mSelectedPackage->getFootprints()) {
         mUi->cbxSelectedFootprint->addItem(*fpt.getNames().value(localeOrder),
@@ -407,7 +402,7 @@ void UnplacedComponentsDock::setSelectedDeviceAndPackage(
       }
       if (mUi->cbxSelectedFootprint->count() > 0) {
         tl::optional<Uuid> footprintUuid =
-            mLastFootprintOfDevice.value(mSelectedDevice->getUuid());
+            mLastFootprintOfDevice.value(*mSelectedDeviceUuid);
         int index =
             footprintUuid
                 ? mUi->cbxSelectedFootprint->findData(footprintUuid->toStr())
@@ -423,20 +418,20 @@ void UnplacedComponentsDock::setSelectedFootprintUuid(
   mUi->btnAdd->setEnabled(false);
   if (mFootprintPreviewGraphicsItem) {
     mFootprintPreviewGraphicsScene->removeItem(*mFootprintPreviewGraphicsItem);
-    delete mFootprintPreviewGraphicsItem;
-    mFootprintPreviewGraphicsItem = nullptr;
+    mFootprintPreviewGraphicsItem.reset();
   }
   mSelectedFootprintUuid = uuid;
 
-  if (mBoard && mSelectedComponent && mSelectedDevice && mSelectedPackage &&
+  if (mBoard && mSelectedComponent && mSelectedDeviceUuid && mSelectedPackage &&
       mSelectedFootprintUuid) {
     const library::Footprint* fpt =
         mSelectedPackage->getFootprints().find(*mSelectedFootprintUuid).get();
     if (fpt) {
-      mFootprintPreviewGraphicsItem = new library::FootprintPreviewGraphicsItem(
-          *mGraphicsLayerProvider, mProject.getSettings().getLocaleOrder(),
-          *fpt, mSelectedPackage, &mSelectedComponent->getLibComponent(),
-          mSelectedComponent);
+      mFootprintPreviewGraphicsItem.reset(
+          new library::FootprintPreviewGraphicsItem(
+              *mGraphicsLayerProvider, mProject.getSettings().getLocaleOrder(),
+              *fpt, mSelectedPackage.data(),
+              &mSelectedComponent->getLibComponent(), mSelectedComponent));
       mFootprintPreviewGraphicsScene->addItem(*mFootprintPreviewGraphicsItem);
       mUi->graphicsView->zoomAll();
       mUi->btnAdd->setEnabled(true);

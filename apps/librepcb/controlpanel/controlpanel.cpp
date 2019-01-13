@@ -30,7 +30,6 @@
 #include <librepcb/common/dialogs/aboutdialog.h>
 #include <librepcb/common/dialogs/filedialog.h>
 #include <librepcb/common/fileio/fileutils.h>
-#include <librepcb/library/library.h>
 #include <librepcb/libraryeditor/libraryeditor.h>
 #include <librepcb/librarymanager/librarymanager.h>
 #include <librepcb/project/project.h>
@@ -379,14 +378,12 @@ ProjectEditor* ControlPanel::getOpenProject(const FilePath& filepath) const
  ******************************************************************************/
 
 void ControlPanel::openLibraryEditor(const FilePath& libDir) noexcept {
-  using library::Library;
   using library::editor::LibraryEditor;
   LibraryEditor* editor = mOpenLibraryEditors.value(libDir);
   if (!editor) {
     try {
       bool remote = libDir.isLocatedInDir(mWorkspace.getRemoteLibrariesPath());
-      QSharedPointer<Library> lib(new Library(libDir, remote));
-      editor = new LibraryEditor(mWorkspace, lib);
+      editor      = new LibraryEditor(mWorkspace, libDir, remote);
       connect(editor, &LibraryEditor::destroyed, this,
               &ControlPanel::libraryEditorDestroyed);
       mOpenLibraryEditors.insert(libDir, editor);

@@ -60,8 +60,8 @@ public:
   PackageCategoryEditorWidget() = delete;
   PackageCategoryEditorWidget(const PackageCategoryEditorWidget& other) =
       delete;
-  PackageCategoryEditorWidget(const Context& context, const FilePath& fp,
-                              QWidget* parent = nullptr);
+  explicit PackageCategoryEditorWidget(const Context& context,
+                                       QWidget*       parent = nullptr);
   ~PackageCategoryEditorWidget() noexcept;
 
   // Operator Overloadings

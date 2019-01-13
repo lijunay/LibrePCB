@@ -38,6 +38,7 @@
  ******************************************************************************/
 namespace librepcb {
 
+class DiskFileSystem;
 class UndoStackActionGroup;
 class ExclusiveActionGroup;
 
@@ -76,7 +77,7 @@ public:
   // Constructors / Destructor
   LibraryEditor()                           = delete;
   LibraryEditor(const LibraryEditor& other) = delete;
-  LibraryEditor(workspace::Workspace& ws, QSharedPointer<Library> lib);
+  LibraryEditor(workspace::Workspace& ws, const FilePath& lib, bool readOnly);
   ~LibraryEditor() noexcept;
 
   /**
@@ -161,6 +162,7 @@ private:  // Methods
 
 private:  // Data
   workspace::Workspace&                mWorkspace;
+  QScopedPointer<DiskFileSystem>       mFileSystem;
   QSharedPointer<Library>              mLibrary;
   QScopedPointer<Ui::LibraryEditor>    mUi;
   QScopedPointer<UndoStackActionGroup> mUndoStackActionGroup;

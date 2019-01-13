@@ -48,7 +48,7 @@
 #include <librepcb/common/application.h>
 #include <librepcb/common/boarddesignrules.h>
 #include <librepcb/common/fileio/sexpression.h>
-#include <librepcb/common/fileio/smartsexprfile.h>
+#include <librepcb/common/fileio/transactionalfilesystem.h>
 #include <librepcb/common/geometry/polygon.h>
 #include <librepcb/common/graphics/graphicsscene.h>
 #include <librepcb/common/graphics/graphicsview.h>
@@ -70,20 +70,17 @@ namespace project {
  *  Constructors / Destructor
  ******************************************************************************/
 
-Board::Board(const Board& other, const FilePath& filepath,
+Board::Board(const Board& other, const QString& filepath,
              const ElementName& name)
   : QObject(&other.getProject()),
     mProject(other.getProject()),
-    mFilePath(filepath),
+    mRelativePath(filepath),
     mIsAddedToProject(false),
     mUuid(Uuid::createRandom()),
     mName(name),
     mDefaultFontFileName(other.mDefaultFontFileName) {
   try {
     mGraphicsScene.reset(new GraphicsScene());
-
-    // copy the other board
-    mFile.reset(SmartSExprFile::create(mFilePath));
 
     // copy layer stack
     mLayerStack.reset(new BoardLayerStack(*this, *other.mLayerStack));
@@ -179,17 +176,16 @@ Board::Board(const Board& other, const FilePath& filepath,
     mDesignRules.reset();
     mGridProperties.reset();
     mLayerStack.reset();
-    mFile.reset();
     mGraphicsScene.reset();
     throw;  // ...and rethrow the exception
   }
 }
 
-Board::Board(Project& project, const FilePath& filepath, bool restore,
-             bool readOnly, bool create, const QString& newName)
+Board::Board(Project& project, const QString& filepath, bool create,
+             const QString& newName)
   : QObject(&project),
     mProject(project),
-    mFilePath(filepath),
+    mRelativePath(filepath),
     mIsAddedToProject(false),
     mUuid(Uuid::createRandom()),
     mName("New Board") {
@@ -198,8 +194,6 @@ Board::Board(Project& project, const FilePath& filepath, bool restore,
 
     // try to open/create the board file
     if (create) {
-      mFile.reset(SmartSExprFile::create(mFilePath));
-
       // set attributes
       mName                = newName;
       mDefaultFontFileName = qApp->getDefaultStrokeFontName();
@@ -220,8 +214,7 @@ Board::Board(Project& project, const FilePath& filepath, bool restore,
       mFabricationOutputSettings.reset(new BoardFabricationOutputSettings());
 
       // load default user settings
-      mUserSettings.reset(
-          new BoardUserSettings(*this, restore, readOnly, create));
+      mUserSettings.reset(new BoardUserSettings(*this));
 
       // add 100x80mm board outline (1/2 Eurocard size)
       Polygon polygon(Uuid::createRandom(),
@@ -230,8 +223,10 @@ Board::Board(Project& project, const FilePath& filepath, bool restore,
                       Path::rect(Point(0, 0), Point(100000000, 80000000)));
       mPolygons.append(new BI_Polygon(*this, polygon));
     } else {
-      mFile.reset(new SmartSExprFile(mFilePath, restore, readOnly));
-      SExpression root = mFile->parseFileAndBuildDomTree();
+      QString     fn = mRelativePath % "board.lp";
+      QString     fp = mProject.getFileSystem().getPrettyPath(fn);
+      SExpression root =
+          SExpression::parse(mProject.getFileSystem().readText(fn), fp);
 
       // the board seems to be ready to open, so we will create all needed
       // objects
@@ -271,8 +266,23 @@ Board::Board(Project& project, const FilePath& filepath, bool restore,
       }
 
       // load user settings
-      mUserSettings.reset(
-          new BoardUserSettings(*this, restore, readOnly, create));
+      try {
+        QString     fn = mRelativePath % "settings.user.lp";
+        QString     fp = mProject.getFileSystem().getPrettyPath(fn);
+        SExpression root =
+            SExpression::parse(mProject.getFileSystem().readText(fn), fp);
+
+        mUserSettings.reset(new BoardUserSettings(*this, root));
+      } catch (const Exception& e) {
+        // User settings are normally not put under version control and thus the
+        // likelyhood of errors is much higher (e.g. when switching to an older,
+        // now incompatible revision), or the file does not exist at all. To
+        // avoid frustration, we just ignore all these errors and load the
+        // default settings instead...
+        qCritical() << "Could not open board user settings, defaults will be "
+                       "used instead!";
+        mUserSettings.reset(new BoardUserSettings(*this));
+      }
 
       // Load all device instances
       foreach (const SExpression& node, root.getChildren("device")) {
@@ -378,7 +388,6 @@ Board::Board(Project& project, const FilePath& filepath, bool restore,
     mDesignRules.reset();
     mGridProperties.reset();
     mLayerStack.reset();
-    mFile.reset();
     mGraphicsScene.reset();
     throw;  // ...and rethrow the exception
   }
@@ -411,7 +420,6 @@ Board::~Board() noexcept {
   mDesignRules.reset();
   mGridProperties.reset();
   mLayerStack.reset();
-  mFile.reset();
   mGraphicsScene.reset();
 }
 
@@ -837,25 +845,36 @@ void Board::removeFromProject() {
   sgl.dismiss();
 }
 
-bool Board::save(bool toOriginal, QStringList& errors) noexcept {
+bool Board::save(QStringList& errors) noexcept {
   bool success = true;
 
   // save board file
   try {
     if (mIsAddedToProject) {
       SExpression doc(serializeToDomElement("librepcb_board"));
-      mFile->save(doc, toOriginal);
+      mProject.getFileSystem().writeText(mRelativePath % "board.lp",
+                                         doc.toString(0));
     } else {
-      mFile->removeFile(toOriginal);
+      mProject.getFileSystem().removeFile(mRelativePath % "board.lp");
     }
   } catch (Exception& e) {
     success = false;
     errors.append(e.getMsg());
   }
 
-  // save user settings
-  if (!mUserSettings->save(toOriginal, errors)) {
+  // save user settings file
+  try {
+    if (mIsAddedToProject) {
+      SExpression doc(
+          mUserSettings->serializeToDomElement("librepcb_board_user_settings"));
+      mProject.getFileSystem().writeText(mRelativePath % "settings.user.lp",
+                                         doc.toString(0));
+    } else {
+      mProject.getFileSystem().removeFile(mRelativePath % "settings.user.lp");
+    }
+  } catch (Exception& e) {
     success = false;
+    errors.append(e.getMsg());
   }
 
   return success;
@@ -1025,9 +1044,9 @@ void Board::updateErcMessages() noexcept {
  *  Static Methods
  ******************************************************************************/
 
-Board* Board::create(Project& project, const FilePath& filepath,
+Board* Board::create(Project& project, const QString& filepath,
                      const ElementName& name) {
-  return new Board(project, filepath, false, false, true, *name);
+  return new Board(project, filepath, true, *name);
 }
 
 /*******************************************************************************

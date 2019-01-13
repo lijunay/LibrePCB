@@ -71,8 +71,8 @@ public:
   // Constructors / Destructor
   PackageEditorWidget()                                 = delete;
   PackageEditorWidget(const PackageEditorWidget& other) = delete;
-  PackageEditorWidget(const Context& context, const FilePath& fp,
-                      QWidget* parent = nullptr);
+  explicit PackageEditorWidget(const Context& context,
+                               QWidget*       parent = nullptr);
   ~PackageEditorWidget() noexcept;
 
   // Getters

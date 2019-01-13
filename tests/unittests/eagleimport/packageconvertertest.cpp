@@ -21,6 +21,7 @@
  *  Includes
  ******************************************************************************/
 #include <gtest/gtest.h>
+#include <librepcb/common/fileio/transactionalfilesystem.h>
 #include <librepcb/eagleimport/converterdb.h>
 #include <librepcb/eagleimport/packageconverter.h>
 #include <librepcb/library/pkg/package.h>
@@ -58,7 +59,8 @@ TEST_F(PackageConverterTest, testConversion) {
   ConverterDb db(testDataDir.getPathTo("db.ini"));
 
   // convert package
-  PackageConverter                  converter(eaglePackage, db);
+  TransactionalFileSystem           fs;
+  PackageConverter                  converter(eaglePackage, db, fs);
   std::unique_ptr<library::Package> package = converter.generate();
 }
 

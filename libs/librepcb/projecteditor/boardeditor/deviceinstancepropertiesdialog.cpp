@@ -71,23 +71,22 @@ DeviceInstancePropertiesDialog::DeviceInstancePropertiesDialog(
   const QStringList& localeOrder = mProject.getSettings().getLocaleOrder();
 
   // Library Element Information
-  QString htmlLink("<a href=\"%1\">%2<a>");
+  QString nameUuidPattern("%1 (%2)");
   mUi->lblLibDeviceName->setText(
-      htmlLink.arg(mDevice.getLibDevice().getFilePath().toQUrl().toString(),
-                   *mDevice.getLibDevice().getNames().value(localeOrder)));
+      nameUuidPattern.arg(*mDevice.getLibDevice().getNames().value(localeOrder),
+                          mDevice.getLibDevice().getUuid().toStr()));
   mUi->lblLibDeviceName->setToolTip(
-      mDevice.getLibDevice().getDescriptions().value(localeOrder) + "<p>" +
-      mDevice.getLibDevice().getFilePath().toNative());
+      mDevice.getLibDevice().getDescriptions().value(localeOrder));
 
-  mUi->lblLibPackageName->setText(
-      htmlLink.arg(mDevice.getLibPackage().getFilePath().toQUrl().toString(),
-                   *mDevice.getLibPackage().getNames().value(localeOrder)));
+  mUi->lblLibPackageName->setText(nameUuidPattern.arg(
+      *mDevice.getLibPackage().getNames().value(localeOrder),
+      mDevice.getLibPackage().getUuid().toStr()));
   mUi->lblLibPackageName->setToolTip(
-      mDevice.getLibPackage().getDescriptions().value(localeOrder) + "<p>" +
-      mDevice.getLibPackage().getFilePath().toNative());
+      mDevice.getLibPackage().getDescriptions().value(localeOrder));
 
-  mUi->lblLibFootprintName->setText(
-      *mDevice.getLibFootprint().getNames().value(localeOrder));
+  mUi->lblLibFootprintName->setText(nameUuidPattern.arg(
+      *mDevice.getLibFootprint().getNames().value(localeOrder),
+      mDevice.getLibFootprint().getUuid().toStr()));
   mUi->lblLibFootprintName->setToolTip(
       mDevice.getLibFootprint().getDescriptions().value(localeOrder));
 

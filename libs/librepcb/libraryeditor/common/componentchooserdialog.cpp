@@ -24,6 +24,7 @@
 
 #include "ui_componentchooserdialog.h"
 
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/common/graphics/graphicsscene.h>
 #include <librepcb/library/cmp/component.h>
 #include <librepcb/library/sym/symbol.h>
@@ -166,12 +167,16 @@ void ComponentChooserDialog::setSelectedComponent(
 void ComponentChooserDialog::updatePreview() noexcept {
   mSymbolGraphicsItems.clear();
   mSymbols.clear();
+  mSymbolFileSystems.clear();
   mComponent.reset();
+  mComponentFileSystem.reset();
 
   if (mComponentFilePath.isValid() && mLayerProvider) {
     try {
-      mComponent.reset(new Component(mComponentFilePath, true));  // can throw
-      if (mComponent && mComponent->getSymbolVariants().count() > 0) {
+      mComponentFileSystem.reset(
+          new DiskFileSystem(mComponentFilePath, true));       // can throw
+      mComponent.reset(new Component(*mComponentFileSystem));  // can throw
+      if (mComponent->getSymbolVariants().count() > 0) {
         const ComponentSymbolVariant& symbVar =
             *mComponent->getSymbolVariants().first();
         for (const ComponentSymbolVariantItem& item :
@@ -179,8 +184,11 @@ void ComponentChooserDialog::updatePreview() noexcept {
           try {
             FilePath fp = mWorkspace.getLibraryDb().getLatestSymbol(
                 item.getSymbolUuid());  // can throw
+            std::shared_ptr<DiskFileSystem> fs =
+                std::make_shared<DiskFileSystem>(fp, true);  // can throw
+            mSymbolFileSystems.append(fs);
             std::shared_ptr<Symbol> sym =
-                std::make_shared<Symbol>(fp, true);  // can throw
+                std::make_shared<Symbol>(*fs);  // can throw
             mSymbols.append(sym);
             std::shared_ptr<SymbolPreviewGraphicsItem> graphicsItem =
                 std::make_shared<SymbolPreviewGraphicsItem>(

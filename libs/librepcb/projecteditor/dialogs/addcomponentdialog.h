@@ -31,11 +31,14 @@
 #include <QtCore>
 #include <QtWidgets>
 
+#include <memory>
+
 /*******************************************************************************
  *  Namespace / Forward Declarations
  ******************************************************************************/
 namespace librepcb {
 
+class DiskFileSystem;
 class GraphicsScene;
 class DefaultGraphicsLayerProvider;
 
@@ -110,22 +113,28 @@ private:
   void accept() noexcept;
 
   // General
-  workspace::Workspace&                        mWorkspace;
-  Project&                                     mProject;
-  Ui::AddComponentDialog*                      mUi;
-  GraphicsScene*                               mComponentPreviewScene;
-  GraphicsScene*                               mDevicePreviewScene;
-  QScopedPointer<DefaultGraphicsLayerProvider> mGraphicsLayerProvider;
-  workspace::ComponentCategoryTreeModel*       mCategoryTreeModel;
+  workspace::Workspace&                                 mWorkspace;
+  Project&                                              mProject;
+  QScopedPointer<Ui::AddComponentDialog>                mUi;
+  QScopedPointer<GraphicsScene>                         mComponentPreviewScene;
+  QScopedPointer<GraphicsScene>                         mDevicePreviewScene;
+  QScopedPointer<DefaultGraphicsLayerProvider>          mGraphicsLayerProvider;
+  QScopedPointer<workspace::ComponentCategoryTreeModel> mCategoryTreeModel;
 
   // Attributes
-  tl::optional<Uuid>                         mSelectedCategoryUuid;
-  const library::Component*                  mSelectedComponent;
-  const library::ComponentSymbolVariant*     mSelectedSymbVar;
-  const library::Device*                     mSelectedDevice;
-  const library::Package*                    mSelectedPackage;
-  QList<library::SymbolPreviewGraphicsItem*> mPreviewSymbolGraphicsItems;
-  library::FootprintPreviewGraphicsItem*     mPreviewFootprintGraphicsItem;
+  tl::optional<Uuid>                       mSelectedCategoryUuid;
+  QScopedPointer<DiskFileSystem>           mSelectedComponentFileSystem;
+  QScopedPointer<const library::Component> mSelectedComponent;
+  const library::ComponentSymbolVariant*   mSelectedSymbVar;
+  tl::optional<Uuid>                       mSelectedDeviceUuid;
+  QScopedPointer<DiskFileSystem>           mSelectedPackageFileSystem;
+  QScopedPointer<const library::Package>   mSelectedPackage;
+  QList<std::shared_ptr<DiskFileSystem>>   mPreviewSymbolFileSystems;
+  QList<std::shared_ptr<library::Symbol>>  mPreviewSymbols;
+  QList<std::shared_ptr<library::SymbolPreviewGraphicsItem>>
+      mPreviewSymbolGraphicsItems;
+  QScopedPointer<library::FootprintPreviewGraphicsItem>
+      mPreviewFootprintGraphicsItem;
 };
 
 /*******************************************************************************

@@ -34,6 +34,7 @@
  ******************************************************************************/
 namespace librepcb {
 
+class DiskFileSystem;
 class IF_GraphicsLayerProvider;
 class GraphicsScene;
 
@@ -100,6 +101,7 @@ private:  // Data
   QScopedPointer<QAbstractItemModel>      mCategoryTreeModel;
   QScopedPointer<GraphicsScene>           mPreviewScene;
   tl::optional<Uuid>                      mSelectedCategoryUuid;
+  QScopedPointer<DiskFileSystem>          mSelectedSymbolFileSystem;
   QScopedPointer<Symbol>                  mSelectedSymbol;
   QScopedPointer<SymbolGraphicsItem>      mGraphicsItem;
 };

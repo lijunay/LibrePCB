@@ -71,8 +71,8 @@ public:
   // Constructors / Destructor
   DeviceEditorWidget()                                = delete;
   DeviceEditorWidget(const DeviceEditorWidget& other) = delete;
-  DeviceEditorWidget(const Context& context, const FilePath& fp,
-                     QWidget* parent = nullptr);
+  explicit DeviceEditorWidget(const Context& context,
+                              QWidget*       parent = nullptr);
   ~DeviceEditorWidget() noexcept;
 
   // Operator Overloadings
@@ -112,12 +112,15 @@ private:  // Data
   QScopedPointer<DefaultGraphicsLayerProvider>      mGraphicsLayerProvider;
 
   // component
+  QScopedPointer<DiskFileSystem>                    mComponentFileSystem;
   QScopedPointer<Component>                         mComponent;
   QScopedPointer<GraphicsScene>                     mComponentGraphicsScene;
+  QList<std::shared_ptr<DiskFileSystem>>            mSymbolFileSystems;
   QList<std::shared_ptr<Symbol>>                    mSymbols;
   QList<std::shared_ptr<SymbolPreviewGraphicsItem>> mSymbolGraphicsItems;
 
   // package
+  QScopedPointer<DiskFileSystem>               mPackageFileSystem;
   QScopedPointer<Package>                      mPackage;
   QScopedPointer<GraphicsScene>                mPackageGraphicsScene;
   QScopedPointer<FootprintPreviewGraphicsItem> mFootprintGraphicsItem;

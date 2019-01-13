@@ -34,6 +34,7 @@
  ******************************************************************************/
 namespace librepcb {
 
+class DiskFileSystem;
 class GraphicsScene;
 class DefaultGraphicsLayerProvider;
 class UndoCommandGroup;
@@ -122,23 +123,25 @@ private:
   ProjectEditor&                               mProjectEditor;
   Project&                                     mProject;
   Board*                                       mBoard;
-  Ui::UnplacedComponentsDock*                  mUi;
+  QScopedPointer<Ui::UnplacedComponentsDock>   mUi;
   QScopedPointer<DefaultGraphicsLayerProvider> mGraphicsLayerProvider;
-  GraphicsScene*                               mFootprintPreviewGraphicsScene;
-  library::FootprintPreviewGraphicsItem*       mFootprintPreviewGraphicsItem;
-  ComponentInstance*                           mSelectedComponent;
-  const library::Device*                       mSelectedDevice;
-  const library::Package*                      mSelectedPackage;
-  tl::optional<Uuid>                           mSelectedFootprintUuid;
-  QMetaObject::Connection                      mCircuitConnection1;
-  QMetaObject::Connection                      mCircuitConnection2;
-  QMetaObject::Connection                      mBoardConnection1;
-  QMetaObject::Connection                      mBoardConnection2;
-  Point                                        mNextPosition;
-  bool                                         mDisableListUpdate;
-  QHash<Uuid, Uuid>                            mLastDeviceOfComponent;
-  QHash<Uuid, tl::optional<Uuid>>              mLastFootprintOfDevice;
-  QScopedPointer<UndoCommandGroup>             mCurrentUndoCmdGroup;
+  QScopedPointer<GraphicsScene>                mFootprintPreviewGraphicsScene;
+  QScopedPointer<library::FootprintPreviewGraphicsItem>
+                                         mFootprintPreviewGraphicsItem;
+  ComponentInstance*                     mSelectedComponent;
+  tl::optional<Uuid>                     mSelectedDeviceUuid;
+  QScopedPointer<DiskFileSystem>         mSelectedPackageFileSystem;
+  QScopedPointer<const library::Package> mSelectedPackage;
+  tl::optional<Uuid>                     mSelectedFootprintUuid;
+  QMetaObject::Connection                mCircuitConnection1;
+  QMetaObject::Connection                mCircuitConnection2;
+  QMetaObject::Connection                mBoardConnection1;
+  QMetaObject::Connection                mBoardConnection2;
+  Point                                  mNextPosition;
+  bool                                   mDisableListUpdate;
+  QHash<Uuid, Uuid>                      mLastDeviceOfComponent;
+  QHash<Uuid, tl::optional<Uuid>>        mLastFootprintOfDevice;
+  QScopedPointer<UndoCommandGroup>       mCurrentUndoCmdGroup;
 };
 
 /*******************************************************************************

@@ -21,6 +21,7 @@
  *  Includes
  ******************************************************************************/
 #include <gtest/gtest.h>
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/common/fileio/fileutils.h>
 #include <librepcb/library/librarybaseelement.h>
 
@@ -40,14 +41,15 @@ namespace tests {
 class LibraryBaseElementTest : public ::testing::Test {
 protected:
   FilePath                           mTempDir;
+  QScopedPointer<DiskFileSystem>     mFileSystem;
   QScopedPointer<LibraryBaseElement> mNewElement;
 
   LibraryBaseElementTest() {
     mTempDir = FilePath::getRandomTempPath();
-
+    mFileSystem.reset(new DiskFileSystem(mTempDir, false));
     mNewElement.reset(new LibraryBaseElement(
-        true, "sym", "symbol", Uuid::createRandom(), Version::fromString("1.0"),
-        "test", ElementName("Test"), "", ""));
+        *mFileSystem, "sym", "symbol", Uuid::createRandom(),
+        Version::fromString("1.0"), "test", ElementName("Test"), "", ""));
   }
 
   virtual ~LibraryBaseElementTest() {
@@ -64,9 +66,9 @@ TEST_F(LibraryBaseElementTest, testSave) {
 }
 
 TEST_F(LibraryBaseElementTest, testSaveToNonExistingDirectory) {
-  FilePath dest = mTempDir.getPathTo(mNewElement->getUuid().toStr());
-  mNewElement->saveTo(dest);
-  EXPECT_TRUE(dest.getPathTo("symbol.lp").isExistingFile());
+  ASSERT_FALSE(mTempDir.isExistingDir());
+  mNewElement->save();
+  EXPECT_TRUE(mTempDir.getPathTo("symbol.lp").isExistingFile());
 }
 
 TEST_F(LibraryBaseElementTest, testSaveToEmptyDirectory) {
@@ -74,19 +76,10 @@ TEST_F(LibraryBaseElementTest, testSaveToEmptyDirectory) {
   // are sometimes created "accidentally" (for example by Git operations which
   // remove files, but not their parent directories). So we handle empty
   // directories like they are not existent...
-  FilePath dest = mTempDir.getPathTo(mNewElement->getUuid().toStr());
-  FileUtils::makePath(dest);
-  ASSERT_TRUE(dest.isExistingDir());
-  mNewElement->saveTo(dest);
-  EXPECT_TRUE(dest.getPathTo("symbol.lp").isExistingFile());
-}
-
-TEST_F(LibraryBaseElementTest, testSaveToNonEmptyDirectory) {
-  // Saving into non-empty destination directory must fail because we may
-  // accidentally overwrite existing files!
-  FilePath dest = mTempDir.getPathTo(mNewElement->getUuid().toStr());
-  FileUtils::writeFile(dest.getPathTo("some file"), "some content");
-  EXPECT_THROW(mNewElement->saveTo(dest), RuntimeError);
+  FileUtils::makePath(mTempDir);
+  ASSERT_TRUE(mTempDir.isExistingDir());
+  mNewElement->save();
+  EXPECT_TRUE(mTempDir.getPathTo("symbol.lp").isExistingFile());
 }
 
 /*******************************************************************************

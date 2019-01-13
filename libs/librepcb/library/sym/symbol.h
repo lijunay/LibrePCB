@@ -65,10 +65,11 @@ public:
   // Constructors / Destructor
   Symbol()                    = delete;
   Symbol(const Symbol& other) = delete;
-  Symbol(const Uuid& uuid, const Version& version, const QString& author,
+  Symbol(const FileSystemRef& fileSystem, const Uuid& uuid,
+         const Version& version, const QString& author,
          const ElementName& name_en_US, const QString& description_en_US,
          const QString& keywords_en_US);
-  explicit Symbol(const FilePath& elementDirectory, bool readOnly);
+  explicit Symbol(const FileSystemRef& fileSystem);
   ~Symbol() noexcept;
 
   // Getters: Geometry

@@ -60,8 +60,8 @@ public:
   ComponentCategoryEditorWidget() = delete;
   ComponentCategoryEditorWidget(const ComponentCategoryEditorWidget& other) =
       delete;
-  ComponentCategoryEditorWidget(const Context& context, const FilePath& fp,
-                                QWidget* parent = nullptr);
+  explicit ComponentCategoryEditorWidget(const Context& context,
+                                         QWidget*       parent = nullptr);
   ~ComponentCategoryEditorWidget() noexcept;
 
   // Operator Overloadings

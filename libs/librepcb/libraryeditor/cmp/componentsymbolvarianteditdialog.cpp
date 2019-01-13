@@ -24,6 +24,7 @@
 
 #include "ui_componentsymbolvarianteditdialog.h"
 
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/common/graphics/defaultgraphicslayerprovider.h>
 #include <librepcb/common/graphics/graphicsscene.h>
 #include <librepcb/library/cmp/component.h>
@@ -107,12 +108,15 @@ void ComponentSymbolVariantEditDialog::accept() noexcept {
 void ComponentSymbolVariantEditDialog::updateGraphicsItems() noexcept {
   mGraphicsItems.clear();
   mSymbols.clear();
+  mSymbolFileSystems.clear();
   for (const ComponentSymbolVariantItem& item : mSymbVar.getSymbolItems()) {
     try {
       FilePath fp = mWorkspace.getLibraryDb().getLatestSymbol(
           item.getSymbolUuid());  // can throw
-      std::shared_ptr<Symbol> sym =
-          std::make_shared<Symbol>(fp, true);  // can throw
+      std::shared_ptr<DiskFileSystem> fs =
+          std::make_shared<DiskFileSystem>(fp, true);  // can throw
+      mSymbolFileSystems.append(fs);
+      std::shared_ptr<Symbol> sym = std::make_shared<Symbol>(*fs);  // can throw
       mSymbols.append(sym);
       std::shared_ptr<SymbolGraphicsItem> graphicsItem =
           std::make_shared<SymbolGraphicsItem>(*sym, *mGraphicsLayerProvider);

@@ -72,16 +72,16 @@ SymbolInstancePropertiesDialog::SymbolInstancePropertiesDialog(
   const QStringList& localeOrder = mProject.getSettings().getLocaleOrder();
 
   // Component Library Element Attributes
-  QString htmlLink("<a href=\"%1\">%2<a>");
-  mUi->lblCompLibName->setText(htmlLink.arg(
-      mComponentInstance.getLibComponent().getFilePath().toQUrl().toString(),
-      *mComponentInstance.getLibComponent().getNames().value(localeOrder)));
+  QString nameUuidPattern("%1 (%2)");
+  mUi->lblCompLibName->setText(nameUuidPattern.arg(
+      *mComponentInstance.getLibComponent().getNames().value(localeOrder),
+      mComponentInstance.getLibComponent().getUuid().toStr()));
   mUi->lblCompLibName->setToolTip(
       mComponentInstance.getLibComponent().getDescriptions().value(
-          localeOrder) +
-      "<p>" + mComponentInstance.getLibComponent().getFilePath().toNative());
-  mUi->lblSymbVarName->setText(
-      *mComponentInstance.getSymbolVariant().getNames().value(localeOrder));
+          localeOrder));
+  mUi->lblSymbVarName->setText(nameUuidPattern.arg(
+      *mComponentInstance.getSymbolVariant().getNames().value(localeOrder),
+      mComponentInstance.getSymbolVariant().getUuid().toStr()));
   mUi->lblSymbVarName->setToolTip(
       mComponentInstance.getSymbolVariant().getDescriptions().value(
           localeOrder));
@@ -95,11 +95,10 @@ SymbolInstancePropertiesDialog::SymbolInstancePropertiesDialog(
 
   // Symbol Library Element Attributes
   mUi->lblSymbLibName->setText(
-      htmlLink.arg(mSymbol.getLibSymbol().getFilePath().toQUrl().toString(),
-                   *mSymbol.getLibSymbol().getNames().value(localeOrder)));
+      nameUuidPattern.arg(*mSymbol.getLibSymbol().getNames().value(localeOrder),
+                          mSymbol.getLibSymbol().getUuid().toStr()));
   mUi->lblSymbLibName->setToolTip(
-      mSymbol.getLibSymbol().getDescriptions().value(localeOrder) + "<p>" +
-      mSymbol.getLibSymbol().getFilePath().toNative());
+      mSymbol.getLibSymbol().getDescriptions().value(localeOrder));
 
   // set focus to component instance name
   mUi->edtCompInstName->selectAll();

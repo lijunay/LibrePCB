@@ -24,6 +24,7 @@
 
 #include "ui_packagechooserdialog.h"
 
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/common/graphics/graphicsscene.h>
 #include <librepcb/library/pkg/footprintpreviewgraphicsitem.h>
 #include <librepcb/library/pkg/package.h>
@@ -167,10 +168,13 @@ void PackageChooserDialog::setSelectedPackage(
 void PackageChooserDialog::updatePreview() noexcept {
   mGraphicsItem.reset();
   mPackage.reset();
+  mPackageFileSystem.reset();
 
   if (mPackageFilePath.isValid() && mLayerProvider) {
     try {
-      mPackage.reset(new Package(mPackageFilePath, true));  // can throw
+      mPackageFileSystem.reset(
+          new DiskFileSystem(mPackageFilePath, true));   // can throw
+      mPackage.reset(new Package(*mPackageFileSystem));  // can throw
       if (mPackage->getFootprints().count() > 0) {
         mGraphicsItem.reset(new FootprintPreviewGraphicsItem(
             *mLayerProvider, QStringList(), *mPackage->getFootprints().first(),

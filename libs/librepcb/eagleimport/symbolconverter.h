@@ -23,6 +23,7 @@
 /*******************************************************************************
  *  Includes
  ******************************************************************************/
+#include <librepcb/common/fileio/filesystemref.h>
 #include <librepcb/common/graphics/graphicslayername.h>
 
 #include <QtCore>
@@ -59,7 +60,8 @@ public:
   // Constructors / Destructor
   SymbolConverter()                             = delete;
   SymbolConverter(const SymbolConverter& other) = delete;
-  SymbolConverter(const parseagle::Symbol& symbol, ConverterDb& db) noexcept;
+  SymbolConverter(const parseagle::Symbol& symbol, ConverterDb& db,
+                  const FileSystemRef& fs) noexcept;
   ~SymbolConverter() noexcept;
 
   // General Methods
@@ -74,6 +76,7 @@ private:
 
   const parseagle::Symbol& mSymbol;
   ConverterDb&             mDb;
+  FileSystemRef            mFileSystem;
 };
 
 /*******************************************************************************

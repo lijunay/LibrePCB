@@ -67,8 +67,8 @@ public:
   // Constructors / Destructor
   ComponentEditorWidget()                                   = delete;
   ComponentEditorWidget(const ComponentEditorWidget& other) = delete;
-  ComponentEditorWidget(const Context& context, const FilePath& fp,
-                        QWidget* parent = nullptr);
+  explicit ComponentEditorWidget(const Context& context,
+                                 QWidget*       parent = nullptr);
   ~ComponentEditorWidget() noexcept;
 
   // Operator Overloadings

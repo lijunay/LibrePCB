@@ -21,6 +21,7 @@
  *  Includes
  ******************************************************************************/
 #include <gtest/gtest.h>
+#include <librepcb/common/fileio/transactionalfilesystem.h>
 #include <librepcb/eagleimport/converterdb.h>
 #include <librepcb/eagleimport/symbolconverter.h>
 #include <librepcb/library/sym/symbol.h>
@@ -58,7 +59,8 @@ TEST_F(SymbolConverterTest, testConversion) {
   ConverterDb db(testDataDir.getPathTo("db.ini"));
 
   // convert symbol
-  SymbolConverter                  converter(eagleSymbol, db);
+  TransactionalFileSystem          fs;
+  SymbolConverter                  converter(eagleSymbol, db, fs);
   std::unique_ptr<library::Symbol> symbol = converter.generate();
 }
 

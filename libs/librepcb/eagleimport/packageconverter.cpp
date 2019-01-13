@@ -42,8 +42,9 @@ namespace eagleimport {
  ******************************************************************************/
 
 PackageConverter::PackageConverter(const parseagle::Package& package,
-                                   ConverterDb&              db) noexcept
-  : mPackage(package), mDb(db) {
+                                   ConverterDb&              db,
+                                   const FileSystemRef&      fs) noexcept
+  : mPackage(package), mDb(db), mFileSystem(fs) {
 }
 
 PackageConverter::~PackageConverter() noexcept {
@@ -58,10 +59,11 @@ std::unique_ptr<library::Package> PackageConverter::generate() const {
       new library::Footprint(mDb.getFootprintUuid(mPackage.getName()),
                              ElementName("default"), ""));  // can throw
 
-  std::unique_ptr<library::Package> package(new library::Package(
-      mDb.getPackageUuid(mPackage.getName()), Version::fromString("0.1"),
-      "LibrePCB", ElementName(mPackage.getName()), createDescription(),
-      ""));  // can throw
+  std::unique_ptr<library::Package> package(
+      new library::Package(mFileSystem, mDb.getPackageUuid(mPackage.getName()),
+                           Version::fromString("0.1"), "LibrePCB",
+                           ElementName(mPackage.getName()), createDescription(),
+                           ""));  // can throw
 
   foreach (const parseagle::Wire& wire, mPackage.getWires()) {
     GraphicsLayerName layerName  = convertBoardLayer(wire.getLayer());

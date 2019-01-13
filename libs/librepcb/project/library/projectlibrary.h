@@ -23,8 +23,7 @@
 /*******************************************************************************
  *  Includes
  ******************************************************************************/
-#include <librepcb/common/exceptions.h>
-#include <librepcb/common/fileio/filepath.h>
+#include <librepcb/common/fileio/filesystemref.h>
 #include <librepcb/common/uuid.h>
 
 #include <QtCore>
@@ -33,6 +32,8 @@
  *  Namespace / Forward Declarations
  ******************************************************************************/
 namespace librepcb {
+
+class FileSystemRef;
 
 namespace library {
 class LibraryBaseElement;
@@ -61,7 +62,7 @@ class ProjectLibrary final : public QObject {
 
 public:
   // Constructors / Destructor
-  explicit ProjectLibrary(const FilePath& libDir, bool restore, bool readOnly);
+  explicit ProjectLibrary(const FileSystemRef& libFileSystem);
   ~ProjectLibrary() noexcept;
 
   // Getters: Library Elements
@@ -105,7 +106,7 @@ public:
   void removeDevice(library::Device& d);
 
   // General Methods
-  bool save(bool toOriginal, QStringList& errors) noexcept;
+  bool save(QStringList& errors) noexcept;
 
 private:
   // make some methods inaccessible...
@@ -114,9 +115,8 @@ private:
   ProjectLibrary& operator=(const ProjectLibrary& rhs);
 
   // Private Methods
-  QSet<library::LibraryBaseElement*> getCurrentElements() const noexcept;
   template <typename ElementType>
-  void loadElements(const FilePath& directory, const QString& type,
+  void loadElements(const FileSystemRef& directory, const QString& type,
                     QHash<Uuid, ElementType*>& elementList);
   template <typename ElementType>
   void addElement(ElementType& element, QHash<Uuid, ElementType*>& elementList);
@@ -125,9 +125,7 @@ private:
                      QHash<Uuid, ElementType*>& elementList);
 
   // General
-  FilePath mLibraryPath;  ///< the "library" directory of the project
-  FilePath mBackupPath;   ///< same as #mLibraryPath, but with trailing "~"
-  FilePath mTmpDir;       ///< path to a temporary directory
+  FileSystemRef mFileSystem;  ///< the "library" directory of the project
 
   // The currently added library elements
   QHash<Uuid, library::Symbol*>    mSymbols;
@@ -136,9 +134,6 @@ private:
   QHash<Uuid, library::Device*>    mDevices;
 
   QSet<library::LibraryBaseElement*> mAllElements;
-  QSet<library::LibraryBaseElement*> mLoadedElements;
-  QSet<library::LibraryBaseElement*> mSavedToTemporary;
-  QSet<library::LibraryBaseElement*> mSavedToOriginal;
 };
 
 /*******************************************************************************

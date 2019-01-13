@@ -24,6 +24,7 @@
 
 #include "../workspacelibrarydb.h"
 
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/library/cat/componentcategory.h>
 #include <librepcb/library/cat/packagecategory.h>
 
@@ -53,7 +54,10 @@ CategoryTreeItem<ElementType>::CategoryTreeItem(
   try {
     if (mUuid) {
       FilePath fp = getLatestCategory(library);
-      if (fp.isValid()) mCategory.reset(new ElementType(fp, true));
+      if (fp.isValid()) {
+        mCategoryFileSystem.reset(new DiskFileSystem(fp, true));
+        mCategory.reset(new ElementType(*mCategoryFileSystem));
+      }
     }
 
     if (mUuid || (!mParent)) {

@@ -25,7 +25,7 @@
 #include "../project.h"
 
 #include <librepcb/common/fileio/sexpression.h>
-#include <librepcb/common/fileio/smartsexprfile.h>
+#include <librepcb/common/fileio/transactionalfilesystem.h>
 
 #include <QtCore>
 
@@ -39,55 +39,41 @@ namespace project {
  *  Constructors / Destructor
  ******************************************************************************/
 
-ProjectSettings::ProjectSettings(Project& project, bool restore, bool readOnly,
-                                 bool create)
-  : QObject(nullptr),
-    mProject(project),
-    mFilepath(project.getPath().getPathTo("project/settings.lp")),
-    mFile(nullptr) {
+ProjectSettings::ProjectSettings(Project& project, bool create)
+  : QObject(nullptr), mProject(project) {
   qDebug() << "load settings...";
-  Q_ASSERT(!(create && (restore || readOnly)));
 
-  try {
-    // restore all default values
-    restoreDefaults();
+  // restore all default values
+  restoreDefaults();
 
-    // try to create/open the file "settings.lp"
-    if (create) {
-      mFile = SmartSExprFile::create(mFilepath);
-    } else {
-      mFile            = new SmartSExprFile(mFilepath, restore, readOnly);
-      SExpression root = mFile->parseFileAndBuildDomTree();
+  // try to open the file "settings.lp"
+  if (!create) {
+    QString     fn = "project/settings.lp";
+    QString     fp = mProject.getFileSystem().getPrettyPath(fn);
+    SExpression root =
+        SExpression::parse(mProject.getFileSystem().readText(fn), fp);
 
-      // OK - file is open --> now load all settings
+    // OK - file is open --> now load all settings
 
-      // locale order
-      foreach (const SExpression& node,
-               root.getChildByPath("library_locale_order").getChildren()) {
-        mLocaleOrder.append(node.getValueOfFirstChild<QString>(true));
-      }
-
-      // norm order
-      foreach (const SExpression& node,
-               root.getChildByPath("library_norm_order").getChildren()) {
-        mNormOrder.append(node.getValueOfFirstChild<QString>(true));
-      }
+    // locale order
+    foreach (const SExpression& node,
+             root.getChildByPath("library_locale_order").getChildren()) {
+      mLocaleOrder.append(node.getValueOfFirstChild<QString>(true));
     }
 
-    triggerSettingsChanged();
-  } catch (...) {
-    // free allocated memory and rethrow the exception
-    delete mFile;
-    mFile = nullptr;
-    throw;
+    // norm order
+    foreach (const SExpression& node,
+             root.getChildByPath("library_norm_order").getChildren()) {
+      mNormOrder.append(node.getValueOfFirstChild<QString>(true));
+    }
   }
+
+  triggerSettingsChanged();
 
   qDebug() << "settings successfully loaded!";
 }
 
 ProjectSettings::~ProjectSettings() noexcept {
-  delete mFile;
-  mFile = nullptr;
 }
 
 /*******************************************************************************
@@ -103,13 +89,13 @@ void ProjectSettings::triggerSettingsChanged() noexcept {
   emit settingsChanged();
 }
 
-bool ProjectSettings::save(bool toOriginal, QStringList& errors) noexcept {
+bool ProjectSettings::save(QStringList& errors) noexcept {
   bool success = true;
 
   // Save "project/settings.lp"
   try {
     SExpression doc(serializeToDomElement("librepcb_project_settings"));
-    mFile->save(doc, toOriginal);
+    mProject.getFileSystem().writeText("project/settings.lp", doc.toString(0));
   } catch (Exception& e) {
     success = false;
     errors.append(e.getMsg());

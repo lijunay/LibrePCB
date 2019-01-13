@@ -24,6 +24,7 @@
 
 #include "ui_symbolchooserdialog.h"
 
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/common/graphics/graphicsscene.h>
 #include <librepcb/library/sym/symbol.h>
 #include <librepcb/library/sym/symbolgraphicsitem.h>
@@ -157,16 +158,21 @@ void SymbolChooserDialog::setSelectedCategory(
 }
 
 void SymbolChooserDialog::setSelectedSymbol(const FilePath& fp) noexcept {
-  if (mSelectedSymbol && (mSelectedSymbol->getFilePath() == fp)) return;
+  if (mSelectedSymbolFileSystem && (mSelectedSymbolFileSystem->getRoot() == fp))
+    return;
 
   mUi->lblSymbolName->setText(tr("No symbol selected"));
   mUi->lblSymbolDescription->setText("");
   mGraphicsItem.reset();
   mSelectedSymbol.reset();
+  mSelectedSymbolFileSystem.reset();
 
   if (fp.isValid()) {
     try {
-      mSelectedSymbol.reset(new Symbol(fp, true));  // can throw
+      mSelectedSymbolFileSystem.reset(
+          new DiskFileSystem(fp, true));  // can throw
+      mSelectedSymbol.reset(
+          new Symbol(*mSelectedSymbolFileSystem));  // can throw
       mUi->lblSymbolName->setText(
           *mSelectedSymbol->getNames().value(localeOrder()));
       mUi->lblSymbolDescription->setText(

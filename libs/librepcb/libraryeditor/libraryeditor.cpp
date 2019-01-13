@@ -35,7 +35,7 @@
 
 #include <librepcb/common/application.h>
 #include <librepcb/common/dialogs/aboutdialog.h>
-#include <librepcb/common/fileio/fileutils.h>
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/common/utils/exclusiveactiongroup.h>
 #include <librepcb/common/utils/undostackactiongroup.h>
 #include <librepcb/library/library.h>
@@ -57,14 +57,15 @@ namespace editor {
  *  Constructors / Destructor
  ******************************************************************************/
 
-LibraryEditor::LibraryEditor(workspace::Workspace&   ws,
-                             QSharedPointer<Library> lib)
+LibraryEditor::LibraryEditor(workspace::Workspace& ws, const FilePath& lib,
+                             bool readOnly)
   : QMainWindow(nullptr),
     mWorkspace(ws),
-    mLibrary(lib),
+    mFileSystem(new DiskFileSystem(lib, readOnly)),
+    mLibrary(new Library(*mFileSystem)),
     mUi(new Ui::LibraryEditor),
     mCurrentEditorWidget(nullptr),
-    mLock(lib->getFilePath()) {
+    mLock(lib) {
   mUi->setupUi(this);
   connect(mUi->actionClose, &QAction::triggered, this, &LibraryEditor::close);
   connect(mUi->actionNew, &QAction::triggered, this,
@@ -112,7 +113,7 @@ LibraryEditor::LibraryEditor(workspace::Workspace&   ws,
   const QStringList localeOrder =
       mWorkspace.getSettings().getLibLocaleOrder().getLocaleOrder();
   QString libName = *mLibrary->getNames().value(localeOrder);
-  if (mLibrary->isOpenedReadOnly()) libName.append(tr(" [Read-Only]"));
+  if (readOnly) libName.append(tr(" [Read-Only]"));
   setWindowTitle(QString(tr("%1 - LibrePCB Library Editor")).arg(libName));
   setWindowIcon(mLibrary->getIconAsPixmap());
 
@@ -132,7 +133,7 @@ LibraryEditor::LibraryEditor(workspace::Workspace&   ws,
   // if the library was opened in read-only mode, we guess that it's a remote
   // library and thus show a warning that all modifications are lost after the
   // next update
-  mUi->lblRemoteLibraryWarning->setVisible(mLibrary->isOpenedReadOnly());
+  mUi->lblRemoteLibraryWarning->setVisible(readOnly);
 
   // create the undo stack action group
   mUndoStackActionGroup.reset(new UndoStackActionGroup(
@@ -237,9 +238,9 @@ LibraryEditor::LibraryEditor(workspace::Workspace&   ws,
 #endif
 
   // add overview tab
-  EditorWidgetBase::Context context{mWorkspace, *this, false};
+  EditorWidgetBase::Context context{mWorkspace, *this, lib, readOnly, false};
   LibraryOverviewWidget*    overviewWidget =
-      new LibraryOverviewWidget(context, lib);
+      new LibraryOverviewWidget(context, mLibrary);
   connect(overviewWidget, &LibraryOverviewWidget::windowTitleChanged, this,
           &LibraryEditor::updateTabTitles);
   connect(overviewWidget, &LibraryOverviewWidget::dirtyChanged, this,
@@ -344,7 +345,8 @@ void LibraryEditor::closeTabIfOpen(const FilePath& fp) noexcept {
 void LibraryEditor::newElementTriggered() noexcept {
   NewElementWizard wizard(mWorkspace, *mLibrary, *this, this);
   if (wizard.exec() == QDialog::Accepted) {
-    FilePath fp = wizard.getContext().getOutputDirectory();
+    FileSystemRef dir = wizard.getContext().getOutputDirectory();
+    FilePath      fp  = mFileSystem->getRoot().getPathTo(dir.getRoot());
     switch (wizard.getContext().mElementType) {
       case NewElementWizardContext::ElementType::ComponentCategory:
         editLibraryElementTriggered<ComponentCategory,
@@ -455,8 +457,9 @@ void LibraryEditor::editLibraryElementTriggered(const FilePath& fp,
       }
     }
 
-    EditorWidgetBase::Context context{mWorkspace, *this, isNewElement};
-    EditWidgetType*           widget = new EditWidgetType(context, fp);
+    EditorWidgetBase::Context context{mWorkspace, *this, fp,
+                                      mFileSystem->isReadOnly(), isNewElement};
+    EditWidgetType*           widget = new EditWidgetType(context);
     connect(widget, &QWidget::windowTitleChanged, this,
             &LibraryEditor::updateTabTitles);
     connect(widget, &EditorWidgetBase::cursorPositionChanged, mUi->statusBar,

@@ -27,6 +27,7 @@
 #include "ui_addlibrarywidget.h"
 
 #include <librepcb/common/application.h>
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/common/fileio/fileutils.h>
 #include <librepcb/common/network/repository.h>
 #include <librepcb/library/library.h>
@@ -193,17 +194,18 @@ void AddLibraryWidget::createLocalLibraryButtonClicked() noexcept {
 
   try {
     // create the new library
-    QScopedPointer<Library> lib(new Library(Uuid::createRandom(), *version,
-                                            author, ElementName(name), desc,
-                                            QString("")));  // can throw
-    lib->setUrl(url);
+    DiskFileSystem fs(directory, false);  // can throw
+    Library lib(fs, Uuid::createRandom(), *version, author, ElementName(name),
+                desc,
+                QString(""));  // can throw
+    lib.setUrl(url);
     try {
-      lib->setIcon(FileUtils::readFile(
+      lib.setIcon(FileUtils::readFile(
           qApp->getResourcesDir().getPathTo("library/default_image.png")));
     } catch (const Exception& e) {
       qCritical() << "Could not open the library image:" << e.getMsg();
     }
-    lib->saveTo(directory);  // can throw
+    lib.save();  // can throw
 
     // copy license file
     if (useCc0License) {

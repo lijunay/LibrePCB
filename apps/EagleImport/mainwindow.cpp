@@ -4,6 +4,7 @@
 #include "ui_mainwindow.h"
 
 #include <librepcb/common/fileio/fileutils.h>
+#include <librepcb/common/fileio/transactionalfilesystem.h>
 #include <librepcb/common/graphics/graphicslayer.h>
 #include <librepcb/eagleimport/converterdb.h>
 #include <librepcb/eagleimport/deviceconverter.h>
@@ -165,7 +166,8 @@ bool MainWindow::convertSymbol(eagleimport::ConverterDb& db,
                                const parseagle::Symbol&  symbol) {
   try {
     // create symbol
-    eagleimport::SymbolConverter converter(symbol, db);
+    TransactionalFileSystem      fs;
+    eagleimport::SymbolConverter converter(symbol, db, fs);
     std::unique_ptr<Symbol>      newSymbol = converter.generate();
 
     // convert line rects to polygon rects
@@ -173,8 +175,10 @@ bool MainWindow::convertSymbol(eagleimport::ConverterDb& db,
     polygonSimplifier.convertLineRectsToPolygonRects(false, true);
 
     // save symbol to file
-    newSymbol->saveIntoParentDirectory(
-        FilePath(QString("%1/sym").arg(ui->output->text())));
+    newSymbol->save();
+    fs.saveToDirectory(
+        FilePath(QString("%1/sym/%2")
+                     .arg(ui->output->text(), newSymbol->getUuid().toStr())));
   } catch (const std::exception& e) {
     addError(e.what());
     return false;
@@ -187,7 +191,8 @@ bool MainWindow::convertPackage(eagleimport::ConverterDb& db,
                                 const parseagle::Package& package) {
   try {
     // create package
-    eagleimport::PackageConverter converter(package, db);
+    TransactionalFileSystem       fs;
+    eagleimport::PackageConverter converter(package, db, fs);
     std::unique_ptr<Package>      newPackage = converter.generate();
 
     // convert line rects to polygon rects
@@ -197,8 +202,10 @@ bool MainWindow::convertPackage(eagleimport::ConverterDb& db,
     polygonSimplifier.convertLineRectsToPolygonRects(false, true);
 
     // save package to file
-    newPackage->saveIntoParentDirectory(
-        FilePath(QString("%1/pkg").arg(ui->output->text())));
+    newPackage->save();
+    fs.saveToDirectory(
+        FilePath(QString("%1/pkg/%2")
+                     .arg(ui->output->text(), newPackage->getUuid().toStr())));
   } catch (const std::exception& e) {
     addError(e.what());
     return false;
@@ -215,24 +222,30 @@ bool MainWindow::convertDevice(eagleimport::ConverterDb&   db,
     if (deviceSet.getName().endsWith("-US_")) return false;
 
     // create component
-    eagleimport::DeviceSetConverter converter(deviceSet, db);
+    TransactionalFileSystem         fsCmp;
+    eagleimport::DeviceSetConverter converter(deviceSet, db, fsCmp);
     std::unique_ptr<Component>      newComponent = converter.generate();
 
     // create devices
     foreach (const parseagle::Device& device, deviceSet.getDevices()) {
       if (device.getPackage().isNull()) continue;
 
-      eagleimport::DeviceConverter devConverter(deviceSet, device, db);
+      TransactionalFileSystem      fsDev;
+      eagleimport::DeviceConverter devConverter(deviceSet, device, db, fsDev);
       std::unique_ptr<Device>      newDevice = devConverter.generate();
 
       // save device
-      newDevice->saveIntoParentDirectory(
-          FilePath(QString("%1/dev").arg(ui->output->text())));
+      newDevice->save();
+      fsDev.saveToDirectory(
+          FilePath(QString("%1/dev/%2")
+                       .arg(ui->output->text(), newDevice->getUuid().toStr())));
     }
 
     // save component to file
-    newComponent->saveIntoParentDirectory(
-        FilePath(QString("%1/cmp").arg(ui->output->text())));
+    newComponent->save();
+    fsCmp.saveToDirectory(FilePath(
+        QString("%1/cmp/%2")
+            .arg(ui->output->text(), newComponent->getUuid().toStr())));
   } catch (const std::exception& e) {
     addError(e.what());
     return false;

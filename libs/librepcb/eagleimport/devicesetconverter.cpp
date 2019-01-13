@@ -40,8 +40,9 @@ namespace eagleimport {
  ******************************************************************************/
 
 DeviceSetConverter::DeviceSetConverter(const parseagle::DeviceSet& deviceSet,
-                                       ConverterDb&                db) noexcept
-  : mDeviceSet(deviceSet), mDb(db) {
+                                       ConverterDb&                db,
+                                       const FileSystemRef&        fs) noexcept
+  : mDeviceSet(deviceSet), mDb(db), mFileSystem(fs) {
 }
 
 DeviceSetConverter::~DeviceSetConverter() noexcept {
@@ -54,8 +55,9 @@ DeviceSetConverter::~DeviceSetConverter() noexcept {
 std::unique_ptr<library::Component> DeviceSetConverter::generate() const {
   // create  component
   std::unique_ptr<library::Component> component(new library::Component(
-      mDb.getComponentUuid(mDeviceSet.getName()), Version::fromString("0.1"),
-      "LibrePCB", ElementName(mDeviceSet.getName()), createDescription(),
+      mFileSystem, mDb.getComponentUuid(mDeviceSet.getName()),
+      Version::fromString("0.1"), "LibrePCB", ElementName(mDeviceSet.getName()),
+      createDescription(),
       ""));  // can throw
 
   // properties

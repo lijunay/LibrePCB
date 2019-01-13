@@ -48,15 +48,16 @@ public:
   // Constructors / Destructor
   LibraryCategory()                             = delete;
   LibraryCategory(const LibraryCategory& other) = delete;
-  LibraryCategory(const QString& shortElementName,
+  LibraryCategory(const FileSystemRef& fileSystem,
+                  const QString&       shortElementName,
                   const QString& longElementName, const Uuid& uuid,
                   const Version& version, const QString& author,
                   const ElementName& name_en_US,
                   const QString&     description_en_US,
                   const QString&     keywords_en_US);
-  LibraryCategory(const FilePath& elementDirectory,
-                  const QString&  shortElementName,
-                  const QString& longElementName, bool readOnly);
+  LibraryCategory(const FileSystemRef& fileSystem,
+                  const QString&       shortElementName,
+                  const QString&       longElementName);
   virtual ~LibraryCategory() noexcept;
 
   // Getters: Attributes

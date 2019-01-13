@@ -46,7 +46,6 @@ namespace librepcb {
 class GridProperties;
 class GraphicsView;
 class GraphicsScene;
-class SmartSExprFile;
 class GraphicsLayer;
 class BoardDesignRules;
 
@@ -121,14 +120,14 @@ public:
   // Constructors / Destructor
   Board()                   = delete;
   Board(const Board& other) = delete;
-  Board(const Board& other, const FilePath& filepath, const ElementName& name);
-  Board(Project& project, const FilePath& filepath, bool restore, bool readOnly)
-    : Board(project, filepath, restore, readOnly, false, QString()) {}
+  Board(const Board& other, const QString& filepath, const ElementName& name);
+  Board(Project& project, const QString& filepath)
+    : Board(project, filepath, false, QString()) {}
   ~Board() noexcept;
 
   // Getters: General
-  Project&              getProject() const noexcept { return mProject; }
-  const FilePath&       getFilePath() const noexcept { return mFilePath; }
+  Project&       getProject() const noexcept { return mProject; }
+  const QString& getRelativePath() const noexcept { return mRelativePath; }
   const GridProperties& getGridProperties() const noexcept {
     return *mGridProperties;
   }
@@ -224,7 +223,7 @@ public:
   // General Methods
   void addToProject();
   void removeFromProject();
-  bool save(bool toOriginal, QStringList& errors) noexcept;
+  bool save(QStringList& errors) noexcept;
   void showInView(GraphicsView& view) noexcept;
   void saveViewSceneRect(const QRectF& rect) noexcept { mViewRect = rect; }
   const QRectF& restoreViewSceneRect() const noexcept { return mViewRect; }
@@ -246,7 +245,7 @@ public:
   bool   operator!=(const Board& rhs) noexcept { return (this != &rhs); }
 
   // Static Methods
-  static Board* create(Project& project, const FilePath& filepath,
+  static Board* create(Project& project, const QString& filepath,
                        const ElementName& name);
 
 signals:
@@ -258,8 +257,8 @@ signals:
   void deviceRemoved(BI_Device& comp);
 
 private:
-  Board(Project& project, const FilePath& filepath, bool restore, bool readOnly,
-        bool create, const QString& newName);
+  Board(Project& project, const QString& filepath, bool create,
+        const QString& newName);
   void updateIcon() noexcept;
   void updateErcMessages() noexcept;
 
@@ -267,10 +266,9 @@ private:
   void serialize(SExpression& root) const override;
 
   // General
-  Project& mProject;   ///< A reference to the Project object (from the ctor)
-  FilePath mFilePath;  ///< the filepath of the board.lp file (from the ctor)
-  QScopedPointer<SmartSExprFile> mFile;
-  bool                           mIsAddedToProject;
+  Project& mProject;      ///< A reference to the Project object (from the ctor)
+  QString mRelativePath;  ///< the path to the board's directory (from the ctor)
+  bool    mIsAddedToProject;
 
   QScopedPointer<GraphicsScene>                  mGraphicsScene;
   QScopedPointer<BoardLayerStack>                mLayerStack;

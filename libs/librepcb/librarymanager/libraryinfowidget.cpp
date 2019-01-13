@@ -24,6 +24,7 @@
 
 #include "ui_libraryinfowidget.h"
 
+#include <librepcb/common/fileio/diskfilesystem.h>
 #include <librepcb/common/fileio/fileutils.h>
 #include <librepcb/library/library.h>
 #include <librepcb/workspace/library/workspacelibrarydb.h>
@@ -57,7 +58,8 @@ LibraryInfoWidget::LibraryInfoWidget(workspace::Workspace& ws,
           &LibraryInfoWidget::btnRemoveLibraryClicked);
 
   // try to load the library
-  Library lib(mLibDir, true);  // can throw
+  DiskFileSystem fs(mLibDir, true);  // can throw
+  Library        lib(fs);            // can throw
 
   const QStringList& localeOrder =
       ws.getSettings().getLibLocaleOrder().getLocaleOrder();
@@ -103,9 +105,9 @@ LibraryInfoWidget::LibraryInfoWidget(workspace::Workspace& ws,
   mUi->lblDependencies->setText(dependencies);
   mUi->lblDirectory->setText(
       QString("<a href='%1'>%2</a>")
-          .arg(lib.getFilePath().toQUrl().toLocalFile(),
-               lib.getFilePath().toRelative(ws.getLibrariesPath())));
-  mUi->lblDirectory->setToolTip(lib.getFilePath().toNative());
+          .arg(mLibDir.toQUrl().toLocalFile(),
+               mLibDir.toRelative(ws.getLibrariesPath())));
+  mUi->lblDirectory->setToolTip(mLibDir.toNative());
 }
 
 LibraryInfoWidget::~LibraryInfoWidget() noexcept {

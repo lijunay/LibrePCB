@@ -32,6 +32,9 @@
  *  Namespace / Forward Declarations
  ******************************************************************************/
 namespace librepcb {
+
+class DiskFileSystem;
+
 namespace library {
 
 class LibraryBaseElement;
@@ -98,6 +101,7 @@ private:  // Data
   QScopedPointer<QAbstractItemModel>                mCategoryTreeModel;
   bool                                              mIsCategoryElement;
   tl::optional<Uuid>                                mSelectedCategoryUuid;
+  QScopedPointer<DiskFileSystem>                    mSelectedElementFileSystem;
   QScopedPointer<LibraryBaseElement>                mSelectedElement;
 };
 

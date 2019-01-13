@@ -52,7 +52,7 @@ namespace editor {
 LibraryOverviewWidget::LibraryOverviewWidget(const Context&          context,
                                              QSharedPointer<Library> lib,
                                              QWidget* parent) noexcept
-  : EditorWidgetBase(context, lib->getFilePath(), parent),
+  : EditorWidgetBase(context, parent),
     mLibrary(lib),
     mUi(new Ui::LibraryOverviewWidget) {
   mUi->setupUi(this);
@@ -269,7 +269,7 @@ void LibraryOverviewWidget::updateElementList(QListWidget& listWidget,
     // get all library element names
     QList<FilePath> elements =
         mContext.workspace.getLibraryDb().getLibraryElements<ElementType>(
-            mLibrary->getFilePath());  // can throw
+            getFilePath());  // can throw
     foreach (const FilePath& filepath, elements) {
       QString name;
       mContext.workspace.getLibraryDb().getElementTranslations<ElementType>(
@@ -382,7 +382,7 @@ bool LibraryOverviewWidget::removeSelectedItem(
 
 void LibraryOverviewWidget::btnIconClicked() noexcept {
   QString fp = FileDialog::getOpenFileName(
-      this, tr("Choose library icon"), mLibrary->getIconFilePath().toNative(),
+      this, tr("Choose library icon"), getFilePath().toNative(),
       tr("Portable Network Graphics (*.png)"));
   if (!fp.isEmpty()) {
     try {
