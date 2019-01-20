@@ -48,10 +48,8 @@ ProjectSettings::ProjectSettings(Project& project, bool create)
 
   // try to open the file "settings.lp"
   if (!create) {
-    QString     fn = "project/settings.lp";
-    QString     fp = mProject.getFileSystem().getPrettyPath(fn);
-    SExpression root =
-        SExpression::parse(mProject.getFileSystem().readText(fn), fp);
+    SExpression root = SExpression::parse(
+        mProject.getFileSystem().read("project/settings.lp"));
 
     // OK - file is open --> now load all settings
 
@@ -95,7 +93,7 @@ bool ProjectSettings::save(QStringList& errors) noexcept {
   // Save "project/settings.lp"
   try {
     SExpression doc(serializeToDomElement("librepcb_project_settings"));
-    mProject.getFileSystem().writeText("project/settings.lp", doc.toString(0));
+    mProject.getFileSystem().write("project/settings.lp", doc.toByteArray());
   } catch (Exception& e) {
     success = false;
     errors.append(e.getMsg());

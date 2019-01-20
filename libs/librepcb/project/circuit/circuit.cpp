@@ -46,7 +46,9 @@ namespace project {
  ******************************************************************************/
 
 Circuit::Circuit(Project& project, bool create)
-  : QObject(&project), mProject(project) {
+  : QObject(&project),
+    mProject(project),
+    mDirectory(project.getDirectory().getRefToDir("circuit")) {
   qDebug() << "load circuit...";
 
   try {
@@ -55,10 +57,7 @@ Circuit::Circuit(Project& project, bool create)
       NetClass* netclass = new NetClass(*this, ElementName("default"));
       addNetClass(*netclass);  // add a netclass with name "default"
     } else {
-      QString     fn = "circuit/circuit.lp";
-      QString     fp = mProject.getFileSystem().getPrettyPath(fn);
-      SExpression root =
-          SExpression::parse(mProject.getFileSystem().readText(fn), fp);
+      SExpression root = SExpression::parse(mDirectory.read("circuit.lp"));
 
       // OK - file is open --> now load the whole circuit stuff
 
@@ -387,7 +386,7 @@ bool Circuit::save(QStringList& errors) noexcept {
   // Save "circuit/circuit.lp"
   try {
     SExpression doc(serializeToDomElement("librepcb_circuit"));
-    mProject.getFileSystem().writeText("circuit/circuit.lp", doc.toString(0));
+    mDirectory.write("circuit.lp", doc.toByteArray());
   } catch (Exception& e) {
     success = false;
     errors.append(e.getMsg());

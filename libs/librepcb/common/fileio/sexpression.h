@@ -74,11 +74,10 @@ public:
   ~SExpression() noexcept;
 
   // Getters
-  const QString& getFilePath() const noexcept { return mFilePath; }
-  Type           getType() const noexcept { return mType; }
-  bool           isList() const noexcept { return mType == Type::List; }
-  bool           isToken() const noexcept { return mType == Type::Token; }
-  bool           isString() const noexcept { return mType == Type::String; }
+  Type getType() const noexcept { return mType; }
+  bool isList() const noexcept { return mType == Type::List; }
+  bool isToken() const noexcept { return mType == Type::Token; }
+  bool isString() const noexcept { return mType == Type::String; }
   bool isLineBreak() const noexcept { return mType == Type::LineBreak; }
   bool isMultiLineList() const noexcept;
   const QString&            getName() const;
@@ -94,7 +93,7 @@ public:
     try {
       return deserializeFromSExpression<T>(*this, throwIfEmpty);
     } catch (const Exception& e) {
-      throw FileParseError(__FILE__, __LINE__, mFilePath, -1, -1, mValue,
+      throw FileParseError(__FILE__, __LINE__, QString(), -1, -1, mValue,
                            e.getMsg());
     }
   }
@@ -108,7 +107,7 @@ public:
   template <typename T>
   T getValueOfFirstChild(bool throwIfEmpty = false) const {
     if (mChildren.count() < 1) {
-      throw FileParseError(__FILE__, __LINE__, mFilePath, -1, -1, QString(),
+      throw FileParseError(__FILE__, __LINE__, QString(), -1, -1, QString(),
                            tr("Node does not have children."));
     }
     return mChildren.at(0).getValue<T>(throwIfEmpty);
@@ -138,11 +137,11 @@ public:
   static SExpression createToken(const QString& token);
   static SExpression createString(const QString& string);
   static SExpression createLineBreak();
-  static SExpression parse(const QByteArray& content, const QString& filePath);
+  static SExpression parse(const QByteArray& content);
 
 private:  // Methods
   SExpression(Type type, const QString& value);
-  SExpression(sexpresso::Sexp& sexp, const QString& filePath);
+  explicit SExpression(sexpresso::Sexp& sexp);
 
   QString escapeString(const QString& string) const noexcept;
   bool    isValidListName(const QString& name) const noexcept;
@@ -153,7 +152,6 @@ private:  // Data
   Type               mType;
   QString            mValue;  ///< either a list name, a token or a string
   QList<SExpression> mChildren;
-  QString            mFilePath;
 };
 
 /*******************************************************************************

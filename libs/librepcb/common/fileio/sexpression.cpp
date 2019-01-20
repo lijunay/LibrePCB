@@ -43,14 +43,10 @@ SExpression::SExpression(Type type, const QString& value)
 }
 
 SExpression::SExpression(const SExpression& other) noexcept
-  : mType(other.mType),
-    mValue(other.mValue),
-    mChildren(other.mChildren),
-    mFilePath(other.mFilePath) {
+  : mType(other.mType), mValue(other.mValue), mChildren(other.mChildren) {
 }
 
-SExpression::SExpression(sexpresso::Sexp& sexp, const QString& filePath)
-  : mType(Type::List), mValue(), mFilePath(filePath) {
+SExpression::SExpression(sexpresso::Sexp& sexp) : mType(Type::List), mValue() {
   if (sexp.childCount() < 1) {
     throw RuntimeError(__FILE__, __LINE__);
   }
@@ -62,13 +58,13 @@ SExpression::SExpression(sexpresso::Sexp& sexp, const QString& filePath)
     }
     mValue = QString::fromStdString(first.getString());
     for (auto&& arg : sexp.arguments()) {
-      mChildren.append(SExpression(arg, filePath));
+      mChildren.append(SExpression(arg));
     }
   } else if (sexp.isString()) {
     mValue = QString::fromStdString(sexp.getString());
     mType  = Type::String;
   } else {
-    throw FileParseError(__FILE__, __LINE__, mFilePath, -1, -1, QString(),
+    throw FileParseError(__FILE__, __LINE__, QString(), -1, -1, QString(),
                          tr("Unknown node type."));
   }
 }
@@ -93,18 +89,18 @@ const QString& SExpression::getName() const {
   if (isList()) {
     return mValue;
   } else {
-    throw FileParseError(__FILE__, __LINE__, mFilePath, -1, -1, QString(),
+    throw FileParseError(__FILE__, __LINE__, QString(), -1, -1, QString(),
                          tr("Node is not a list."));
   }
 }
 
 const QString& SExpression::getStringOrToken(bool throwIfEmpty) const {
   if (!isToken() && !isString()) {
-    throw FileParseError(__FILE__, __LINE__, mFilePath, -1, -1, mValue,
+    throw FileParseError(__FILE__, __LINE__, QString(), -1, -1, mValue,
                          tr("Node is not a token or string."));
   }
   if (mValue.isEmpty() && throwIfEmpty) {
-    throw FileParseError(__FILE__, __LINE__, mFilePath, -1, -1, mValue,
+    throw FileParseError(__FILE__, __LINE__, QString(), -1, -1, mValue,
                          tr("Node value is empty."));
   }
   return mValue;
@@ -123,7 +119,7 @@ QList<SExpression> SExpression::getChildren(const QString& name) const
 
 const SExpression& SExpression::getChildByIndex(int index) const {
   if ((index < 0) || index >= mChildren.count()) {
-    throw FileParseError(__FILE__, __LINE__, mFilePath, -1, -1, QString(),
+    throw FileParseError(__FILE__, __LINE__, QString(), -1, -1, QString(),
                          QString(tr("Child not found: %1")).arg(index));
   }
   return mChildren.at(index);
@@ -152,7 +148,7 @@ const SExpression& SExpression::getChildByPath(const QString& path) const {
   if (child) {
     return *child;
   } else {
-    throw FileParseError(__FILE__, __LINE__, mFilePath, -1, -1, QString(),
+    throw FileParseError(__FILE__, __LINE__, QString(), -1, -1, QString(),
                          QString(tr("Child not found: %1")).arg(path));
   }
 }
@@ -203,7 +199,6 @@ SExpression& SExpression::operator=(const SExpression& rhs) noexcept {
   mType     = rhs.mType;
   mValue    = rhs.mValue;
   mChildren = rhs.mChildren;
-  mFilePath = rhs.mFilePath;
   return *this;
 }
 
@@ -289,20 +284,19 @@ SExpression SExpression::createLineBreak() {
   return SExpression(Type::LineBreak, QString());
 }
 
-SExpression SExpression::parse(const QByteArray& content,
-                               const QString&    filePath) {
+SExpression SExpression::parse(const QByteArray& content) {
   std::string     error;
   QString         str  = QString::fromUtf8(content);
   sexpresso::Sexp tree = sexpresso::parse(str.toStdString(), error);
   if (error.empty()) {
     if (tree.childCount() == 1) {
-      return SExpression(tree.getChild(0), filePath);
+      return SExpression(tree.getChild(0));
     } else {
-      throw FileParseError(__FILE__, __LINE__, filePath, -1, -1, QString(),
+      throw FileParseError(__FILE__, __LINE__, QString(), -1, -1, QString(),
                            tr("File does not have exactly one root node."));
     }
   } else {
-    throw FileParseError(__FILE__, __LINE__, filePath, -1, -1, QString(),
+    throw FileParseError(__FILE__, __LINE__, QString(), -1, -1, QString(),
                          QString::fromStdString(error));
   }
 }

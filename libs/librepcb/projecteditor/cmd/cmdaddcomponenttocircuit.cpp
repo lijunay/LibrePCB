@@ -85,11 +85,11 @@ bool CmdAddComponentToCircuit::performExecute() {
                      "workspace library!"))
               .arg(mComponentUuid.toStr()));
     }
-    library::Component* cmp = new library::Component(cmpFp, true);
-    CmdProjectLibraryAddElement<library::Component>* cmdAddToLibrary =
-        new CmdProjectLibraryAddElement<library::Component>(
-            mProject.getLibrary(), *cmp);
-    appendChild(cmdAddToLibrary);  // can throw
+    // library::Component* cmp = new library::Component(cmpFp, true);
+    // CmdProjectLibraryAddElement<library::Component>* cmdAddToLibrary =
+    //    new CmdProjectLibraryAddElement<library::Component>(
+    //        mProject.getLibrary(), *cmp);
+    // appendChild(cmdAddToLibrary);  // can throw
   }
 
   // create child command to add a new component instance to the circuit

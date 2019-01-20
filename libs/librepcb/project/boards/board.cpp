@@ -70,11 +70,11 @@ namespace project {
  *  Constructors / Destructor
  ******************************************************************************/
 
-Board::Board(const Board& other, const QString& filepath,
+Board::Board(const Board& other, const FileSystemRef& directory,
              const ElementName& name)
   : QObject(&other.getProject()),
     mProject(other.getProject()),
-    mRelativePath(filepath),
+    mDirectory(directory),
     mIsAddedToProject(false),
     mUuid(Uuid::createRandom()),
     mName(name),
@@ -181,11 +181,11 @@ Board::Board(const Board& other, const QString& filepath,
   }
 }
 
-Board::Board(Project& project, const QString& filepath, bool create,
+Board::Board(Project& project, const FileSystemRef& directory, bool create,
              const QString& newName)
   : QObject(&project),
     mProject(project),
-    mRelativePath(filepath),
+    mDirectory(directory),
     mIsAddedToProject(false),
     mUuid(Uuid::createRandom()),
     mName("New Board") {
@@ -223,10 +223,7 @@ Board::Board(Project& project, const QString& filepath, bool create,
                       Path::rect(Point(0, 0), Point(100000000, 80000000)));
       mPolygons.append(new BI_Polygon(*this, polygon));
     } else {
-      QString     fn = mRelativePath % "board.lp";
-      QString     fp = mProject.getFileSystem().getPrettyPath(fn);
-      SExpression root =
-          SExpression::parse(mProject.getFileSystem().readText(fn), fp);
+      SExpression root = SExpression::parse(mDirectory.read("board.lp"));
 
       // the board seems to be ready to open, so we will create all needed
       // objects
@@ -267,10 +264,8 @@ Board::Board(Project& project, const QString& filepath, bool create,
 
       // load user settings
       try {
-        QString     fn = mRelativePath % "settings.user.lp";
-        QString     fp = mProject.getFileSystem().getPrettyPath(fn);
         SExpression root =
-            SExpression::parse(mProject.getFileSystem().readText(fn), fp);
+            SExpression::parse(mDirectory.read("settings.user.lp"));
 
         mUserSettings.reset(new BoardUserSettings(*this, root));
       } catch (const Exception& e) {
@@ -852,10 +847,9 @@ bool Board::save(QStringList& errors) noexcept {
   try {
     if (mIsAddedToProject) {
       SExpression doc(serializeToDomElement("librepcb_board"));
-      mProject.getFileSystem().writeText(mRelativePath % "board.lp",
-                                         doc.toString(0));
+      mDirectory.write("board.lp", doc.toByteArray());
     } else {
-      mProject.getFileSystem().removeFile(mRelativePath % "board.lp");
+      mDirectory.removeFile("board.lp");
     }
   } catch (Exception& e) {
     success = false;
@@ -867,10 +861,9 @@ bool Board::save(QStringList& errors) noexcept {
     if (mIsAddedToProject) {
       SExpression doc(
           mUserSettings->serializeToDomElement("librepcb_board_user_settings"));
-      mProject.getFileSystem().writeText(mRelativePath % "settings.user.lp",
-                                         doc.toString(0));
+      mDirectory.write("settings.user.lp", doc.toByteArray());
     } else {
-      mProject.getFileSystem().removeFile(mRelativePath % "settings.user.lp");
+      mDirectory.removeFile("settings.user.lp");
     }
   } catch (Exception& e) {
     success = false;
@@ -1044,9 +1037,9 @@ void Board::updateErcMessages() noexcept {
  *  Static Methods
  ******************************************************************************/
 
-Board* Board::create(Project& project, const QString& filepath,
+Board* Board::create(Project& project, const FileSystemRef& directory,
                      const ElementName& name) {
-  return new Board(project, filepath, true, *name);
+  return new Board(project, directory, true, *name);
 }
 
 /*******************************************************************************

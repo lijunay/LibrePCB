@@ -90,11 +90,11 @@ bool CmdAddDeviceToBoard::performExecute() {
                      "workspace library!"))
               .arg(mDeviceUuid.toStr()));
     }
-    dev = new library::Device(devFp, true);
-    CmdProjectLibraryAddElement<library::Device>* cmdAddToLibrary =
-        new CmdProjectLibraryAddElement<library::Device>(
-            mBoard.getProject().getLibrary(), *dev);
-    execNewChildCmd(cmdAddToLibrary);  // can throw
+    // dev = new library::Device(devFp, true);
+    // CmdProjectLibraryAddElement<library::Device>* cmdAddToLibrary =
+    //    new CmdProjectLibraryAddElement<library::Device>(
+    //        mBoard.getProject().getLibrary(), *dev);
+    // execNewChildCmd(cmdAddToLibrary);  // can throw
   }
   Q_ASSERT(dev);
 
@@ -111,11 +111,11 @@ bool CmdAddDeviceToBoard::performExecute() {
                      "workspace library!"))
               .arg(pkgUuid.toStr()));
     }
-    pkg = new library::Package(pkgFp, true);
-    CmdProjectLibraryAddElement<library::Package>* cmdAddToLibrary =
-        new CmdProjectLibraryAddElement<library::Package>(
-            mBoard.getProject().getLibrary(), *pkg);
-    execNewChildCmd(cmdAddToLibrary);  // can throw
+    // pkg = new library::Package(pkgFp, true);
+    // CmdProjectLibraryAddElement<library::Package>* cmdAddToLibrary =
+    //    new CmdProjectLibraryAddElement<library::Package>(
+    //        mBoard.getProject().getLibrary(), *pkg);
+    // execNewChildCmd(cmdAddToLibrary);  // can throw
   }
   Q_ASSERT(pkg);
 

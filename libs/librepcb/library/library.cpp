@@ -72,7 +72,7 @@ Library::Library(const FileSystemRef& fileSystem)
 
   // load image if available
   if (mFileSystem.fileExists(getIconFileName())) {
-    mIcon = mFileSystem.readBinary(getIconFileName());  // can throw
+    mIcon = mFileSystem.read(getIconFileName());  // can throw
   }
 
   cleanupAfterLoadingElementFromFile();
@@ -115,7 +115,7 @@ void Library::save() {
 
   // Save icon.
   if (!mIcon.isEmpty()) {
-    mFileSystem.writeBinary(getIconFileName(), mIcon);  // can throw
+    mFileSystem.write(getIconFileName(), mIcon);  // can throw
   } else if (mFileSystem.fileExists(getIconFileName())) {
     mFileSystem.removeFile(getIconFileName());  // can throw
   }

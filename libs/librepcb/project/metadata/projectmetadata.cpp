@@ -56,10 +56,8 @@ ProjectMetadata::ProjectMetadata(Project& project, bool create)
     mVersion = "v1";
     mCreated = QDateTime::currentDateTime();
   } else {
-    QString     fn = "project/metadata.lp";
-    QString     fp = mProject.getFileSystem().getPrettyPath(fn);
-    SExpression root =
-        SExpression::parse(mProject.getFileSystem().readText(fn), fp);
+    SExpression root = SExpression::parse(
+        mProject.getFileSystem().read("project/metadata.lp"));
 
     if (root.getChildByIndex(0)
             .isString()) {  // backward compatibility, remove this some time!
@@ -127,7 +125,7 @@ bool ProjectMetadata::save(QStringList& errors) noexcept {
 
   try {
     SExpression doc(serializeToDomElement("librepcb_project_metadata"));
-    mProject.getFileSystem().writeText("project/metadata.lp", doc.toString(0));
+    mProject.getFileSystem().write("project/metadata.lp", doc.toByteArray());
   } catch (const Exception& e) {
     success = false;
     errors.append(e.getMsg());

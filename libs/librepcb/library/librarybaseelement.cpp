@@ -87,7 +87,7 @@ LibraryBaseElement::LibraryBaseElement(const FileSystemRef& fileSystem,
 
   // read version number from version file
   VersionFile versionFile =
-      VersionFile::fromByteArray(mFileSystem.readBinary(versionFileName));
+      VersionFile::fromByteArray(mFileSystem.read(versionFileName));
   if (versionFile.getVersion() > qApp->getAppVersion()) {
     throw RuntimeError(
         __FILE__, __LINE__,
@@ -99,10 +99,8 @@ LibraryBaseElement::LibraryBaseElement(const FileSystemRef& fileSystem,
   }
 
   // open main file
-  QString sexprFileName = mLongElementName % ".lp";
-  QString sexprFilePath = mFileSystem.getPrettyPath(sexprFileName);
   mLoadingFileDocument =
-      SExpression::parse(mFileSystem.readText(sexprFileName), sexprFilePath);
+      SExpression::parse(mFileSystem.read(mLongElementName % ".lp"));
 
   // read attributes
   if (mLoadingFileDocument.getChildByIndex(0).isString()) {
@@ -152,12 +150,12 @@ void LibraryBaseElement::save() {
   // save S-Expressions file
   QString     sexprFileName = mLongElementName % ".lp";
   SExpression root(serializeToDomElement("librepcb_" % mLongElementName));
-  mFileSystem.writeText(sexprFileName, root.toString(0));
+  mFileSystem.write(sexprFileName, root.toByteArray());
 
   // save version number file
   QString     versionFileName = ".librepcb-" % mShortElementName;
   VersionFile versionFile(qApp->getFileFormatVersion());
-  mFileSystem.writeBinary(versionFileName, versionFile.toByteArray());
+  mFileSystem.write(versionFileName, versionFile.toByteArray());
 }
 
 /*******************************************************************************

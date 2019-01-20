@@ -26,7 +26,7 @@
 #include <librepcb/common/circuitidentifier.h>
 #include <librepcb/common/elementname.h>
 #include <librepcb/common/exceptions.h>
-#include <librepcb/common/fileio/filepath.h>
+#include <librepcb/common/fileio/filesystemref.h>
 #include <librepcb/common/fileio/serializableobject.h>
 #include <librepcb/common/uuid.h>
 #include <librepcb/library/cmp/componentprefix.h>
@@ -145,6 +145,7 @@ private:
 
   // General
   Project& mProject;  ///< A reference to the Project object (from the ctor)
+  FileSystemRef mDirectory;
 
   QMap<Uuid, NetClass*>          mNetClasses;
   QMap<Uuid, NetSignal*>         mNetSignals;

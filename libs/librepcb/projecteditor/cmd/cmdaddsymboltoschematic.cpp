@@ -90,11 +90,11 @@ bool CmdAddSymbolToSchematic::performExecute() {
                      "workspace library!"))
               .arg(symbolUuid.toStr()));
     }
-    library::Symbol* sym = new library::Symbol(symFp, true);
-    CmdProjectLibraryAddElement<library::Symbol>* cmdAddToLibrary =
-        new CmdProjectLibraryAddElement<library::Symbol>(
-            mSchematic.getProject().getLibrary(), *sym);
-    execNewChildCmd(cmdAddToLibrary);  // can throw
+    // library::Symbol* sym = new library::Symbol(symFp, true);
+    // CmdProjectLibraryAddElement<library::Symbol>* cmdAddToLibrary =
+    //    new CmdProjectLibraryAddElement<library::Symbol>(
+    //        mSchematic.getProject().getLibrary(), *sym);
+    // execNewChildCmd(cmdAddToLibrary);  // can throw
   }
 
   // create the new symbol (schematic takes ownership)

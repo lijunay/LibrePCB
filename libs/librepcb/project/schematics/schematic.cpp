@@ -72,10 +72,8 @@ Schematic::Schematic(Project& project, const QString& filepath, bool create,
       // load default grid properties
       mGridProperties.reset(new GridProperties());
     } else {
-      QString     fn = mRelativePath % "schematic.lp";
-      QString     fp = mProject.getFileSystem().getPrettyPath(fn);
-      SExpression root =
-          SExpression::parse(mProject.getFileSystem().readText(fn), fp);
+      SExpression root = SExpression::parse(
+          mProject.getFileSystem().read(mRelativePath % "schematic.lp"));
 
       // the schematic seems to be ready to open, so we will create all needed
       // objects
@@ -360,8 +358,8 @@ bool Schematic::save(QStringList& errors) noexcept {
   try {
     if (mIsAddedToProject) {
       SExpression doc(serializeToDomElement("librepcb_schematic"));
-      mProject.getFileSystem().writeText(mRelativePath % "schematic.lp",
-                                         doc.toString(0));
+      mProject.getFileSystem().write(mRelativePath % "schematic.lp",
+                                     doc.toByteArray());
     } else {
       mProject.getFileSystem().removeFile(mRelativePath % "schematic.lp");
     }

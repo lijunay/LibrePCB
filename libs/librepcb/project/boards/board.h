@@ -28,7 +28,7 @@
 #include <librepcb/common/attributes/attributeprovider.h>
 #include <librepcb/common/elementname.h>
 #include <librepcb/common/exceptions.h>
-#include <librepcb/common/fileio/filepath.h>
+#include <librepcb/common/fileio/filesystemref.h>
 #include <librepcb/common/fileio/serializableobject.h>
 #include <librepcb/common/units/all_length_units.h>
 #include <librepcb/common/uuid.h>
@@ -120,14 +120,14 @@ public:
   // Constructors / Destructor
   Board()                   = delete;
   Board(const Board& other) = delete;
-  Board(const Board& other, const QString& filepath, const ElementName& name);
-  Board(Project& project, const QString& filepath)
-    : Board(project, filepath, false, QString()) {}
+  Board(const Board& other, const FileSystemRef& directory,
+        const ElementName& name);
+  Board(Project& project, const FileSystemRef& directory)
+    : Board(project, directory, false, QString()) {}
   ~Board() noexcept;
 
   // Getters: General
-  Project&       getProject() const noexcept { return mProject; }
-  const QString& getRelativePath() const noexcept { return mRelativePath; }
+  Project&              getProject() const noexcept { return mProject; }
   const GridProperties& getGridProperties() const noexcept {
     return *mGridProperties;
   }
@@ -245,7 +245,7 @@ public:
   bool   operator!=(const Board& rhs) noexcept { return (this != &rhs); }
 
   // Static Methods
-  static Board* create(Project& project, const QString& filepath,
+  static Board* create(Project& project, const FileSystemRef& directory,
                        const ElementName& name);
 
 signals:
@@ -257,7 +257,7 @@ signals:
   void deviceRemoved(BI_Device& comp);
 
 private:
-  Board(Project& project, const QString& filepath, bool create,
+  Board(Project& project, const FileSystemRef& directory, bool create,
         const QString& newName);
   void updateIcon() noexcept;
   void updateErcMessages() noexcept;
@@ -266,9 +266,9 @@ private:
   void serialize(SExpression& root) const override;
 
   // General
-  Project& mProject;      ///< A reference to the Project object (from the ctor)
-  QString mRelativePath;  ///< the path to the board's directory (from the ctor)
-  bool    mIsAddedToProject;
+  Project& mProject;  ///< A reference to the Project object (from the ctor)
+  FileSystemRef mDirectory;  ///< the board's directory
+  bool          mIsAddedToProject;
 
   QScopedPointer<GraphicsScene>                  mGraphicsScene;
   QScopedPointer<BoardLayerStack>                mLayerStack;

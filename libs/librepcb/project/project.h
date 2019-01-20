@@ -28,6 +28,8 @@
 #include <librepcb/common/elementname.h>
 #include <librepcb/common/exceptions.h>
 #include <librepcb/common/fileio/directorylock.h>
+#include <librepcb/common/fileio/filesystemref.h>
+#include <librepcb/common/fileio/transactionalfilesystem.h>
 #include <librepcb/common/uuid.h>
 #include <librepcb/common/version.h>
 
@@ -40,10 +42,6 @@ class QPrinter;
 
 namespace librepcb {
 
-class DiskFileSystem;
-class SmartTextFile;
-class SmartSExprFile;
-class SmartVersionFile;
 class StrokeFontPool;
 
 namespace project {
@@ -122,6 +120,20 @@ public:
    * @return The filepath to the project directory
    */
   const FilePath& getPath() const noexcept { return mPath; }
+
+  /**
+   * @brief Get the file system directory of the project
+   *
+   * @return The project's file system directory
+   */
+  FileSystemRef getDirectory() noexcept { return FileSystemRef(*mFileSystem); }
+
+  /**
+   * @brief Get the file system of the project
+   *
+   * @return The project's file system
+   */
+  TransactionalFileSystem& getFileSystem() noexcept { return *mFileSystem; }
 
   /**
    * @brief Check whether this project was opened in read-only mode or not
@@ -495,9 +507,7 @@ private:
   // Project File (*.lpp)
   FilePath mPath;      ///< the path to the project directory
   FilePath mFilepath;  ///< the filepath of the *.lpp project file
-  QScopedPointer<SmartVersionFile>
-                                mVersionFile;  ///< the ".librepcb-project" file
-  QScopedPointer<SmartTextFile> mProjectFile;  ///< the *.lpp project file
+  QScopedPointer<TransactionalFileSystem> mFileSystem;
   DirectoryLock mLock;  ///< Lock for the whole project directory (see @ref
                         ///< doc_project_lock)
   bool mIsRestored;  ///< the constructor will set this to true if the project
@@ -505,12 +515,7 @@ private:
   bool mIsReadOnly;  ///< the constructor will set this to true if the project
                      ///< was opened in read only mode
 
-  // schematic and board list files
-  QScopedPointer<SmartSExprFile> mSchematicsFile;  ///< core/schematics.lp
-  QScopedPointer<SmartSExprFile> mBoardsFile;      ///< core/boards.lp
-
   // General
-  QScopedPointer<DiskFileSystem> mFontsFileSystem;
   QScopedPointer<StrokeFontPool>
       mStrokeFontPool;  ///< all fonts from ./resources/fontobene/
   QScopedPointer<ProjectMetadata>
